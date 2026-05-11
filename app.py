@@ -6,21 +6,20 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 import os
 
-st.set_page_config(page_title="TOMTAŞ LIFT-UP AI", layout="wide")
+st.set_page_config(page_title="TOMTAŞ LIFT-UP", layout="wide")
 
 # --- HEADER: BAŞLIK VE LOGO YANYANA ---
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
-    st.title("🛠️ TOMTAŞ LIFT-UP: AI Takım Ömrü Asistanı")
+    st.title("🛠️ TOMTAŞ LIFT-UP: CMM ve CAM Entegreli Kestirimci Bakım Algoritması")
+    st.markdown("Taylor Denklemleri ve Makine Öğrenmesi Tabanlı Otonom Karar Mekanizması")
 
 with col_logo:
-    if os.path.exists("logo.png"):
-        st.image("logo.png", width=150)
+    if os.path.exists("agtoe.png"):
+        st.image("agtoe.png", width=150)
     elif os.path.exists("logo.jpg"):
         st.image("logo.jpg", width=150)
-
-st.markdown("CMM ve CAM verileri ile Kestirimci Bakım ve Otonom Karar Mekanizması")
 
 class AI_ToolLife:
     def __init__(self, tolerance):
@@ -41,6 +40,7 @@ class AI_ToolLife:
         X = np.array(blocks).reshape(-1, 1)
         y = np.array(wear_data)
         max_blok = max(blocks)
+        veri_sayisi = len(blocks) 
 
         poly = PolynomialFeatures(degree=2)
         X_poly = poly.fit_transform(X)
@@ -54,9 +54,20 @@ class AI_ToolLife:
         roots = np.roots(coefs)
         valid_roots = [r.real for r in roots if np.isreal(r) and r.real > 0]
 
-        if valid_roots and min(valid_roots) <= (max_blok * 3):
+        # --- YAPAY ZEKA VE TAYLOR MANTIK KONTROLÜ İÇİN DEĞİŞKENLER ---
+        karsilastirma_durumu = "normal"
+        uzak_tahmin_uyarisi = False
+
+        if valid_roots:
             exact_cross = min(valid_roots) 
-            grafik_son_blok = max(max_blok, int(np.ceil(exact_cross)) + 2)
+            
+            # Kestiği yere kadar gidip 2 fazlasını her halükarda çiz (Kullanıcı RAM patlatmasın diye max 5000 sınır kondu)
+            grafik_son_blok = min(int(np.ceil(exact_cross)) + 2, 5000)
+            
+            # Eğer tahmin, mevcut verinin 5 katından uzağa taşıyorsa uyarı tetikle
+            if exact_cross > (max_blok * 5):
+                uzak_tahmin_uyarisi = True
+
             tam_blok = int(exact_cross)
             yuzde = int(round((exact_cross - tam_blok) * 100))
             
@@ -72,6 +83,15 @@ class AI_ToolLife:
                 dk += 1
                 sn = 0
 
+            # TAYLOR KIYASLAMA ALGORİTMASI
+            oran = exact_time_minutes / t_theo
+            if oran >= 1.0:
+                karsilastirma_durumu = "hata_buyuk"
+            elif oran >= 0.75:
+                karsilastirma_durumu = "tebrikler"
+            elif oran <= 0.15:
+                karsilastirma_durumu = "hata_kucuk"
+
             if yuzde == 0:
                 guven_araligi_metni = f"{tam_blok}.00 Blok"
                 uretim_metni = f"**{tam_blok} tam blok** risksiz üretilir. Takım tam **{tam_blok}. bloğun bitiminde** tolerans sınırını aşacaktır."
@@ -81,7 +101,7 @@ class AI_ToolLife:
                 
             sure_araligi_metni = f"{dk} Dk {sn} Sn"
         else:
-            grafik_son_blok = max_blok * 2
+            grafik_son_blok = int(max_blok * 1.5) 
             guven_araligi_metni = f"{grafik_son_blok}+ Blok"
             sure_araligi_metni = f"{grafik_son_blok * cam_cycle_time:.1f}+ Dk"
             uretim_metni = "Analiz ufku boyunca takımda riskli aşınma gözlemlenmemiştir."
@@ -96,7 +116,10 @@ class AI_ToolLife:
             'guven_araligi_metni': guven_araligi_metni,
             'sure_araligi_metni': sure_araligi_metni,
             'uretim_metni': uretim_metni,
-            'cam_cycle_time': cam_cycle_time
+            'cam_cycle_time': cam_cycle_time,
+            'veri_sayisi': veri_sayisi,
+            'uzak_tahmin_uyarisi': uzak_tahmin_uyarisi,
+            'karsilastirma_durumu': karsilastirma_durumu
         }
 
     def plot_dashboard(self):
@@ -127,12 +150,27 @@ class AI_ToolLife:
 
             st.markdown(f"### 📌 {name.upper()} | Alaşım: {data['mat_name']}")
             col1, col2, col3 = st.columns(3)
-            col1.metric("Teorik Katalog Ömrü", f"{data['t_theo']:.1f} Dakika")
+            col1.metric("Teorik Taylor Ömrü", f"{data['t_theo']:.1f} Dakika")
             col2.metric("Tam Kırılma Noktası (Blok)", data['guven_araligi_metni'])
             col3.metric("Tam Kırılma Noktası (Zaman)", data['sure_araligi_metni'])
             
             st.info(f"**Operasyon Önerisi:** {data['uretim_metni']}")
             
+            # --- YENİ ZEKİ UYARI SİSTEMLERİ ---
+            if data['veri_sayisi'] < 3:
+                st.error("⚠️ **Düşük Veri Yoğunluğu:** Modele 3'ten az ölçüm girilmiştir. Yapılan tahminin istatistiksel yanılma payı yüksektir.")
+            
+            if data['uzak_tahmin_uyarisi']:
+                st.warning("🔭 **Aşırı Uzak Tahmin:** Girdiğiniz verilere göre kırılma çok ileride görünüyor. Grafik çizildi ancak çok uzun vadeli regresyon tahminleri (ekstrapolasyon) yanıltıcı olabilir.")
+
+            if data['karsilastirma_durumu'] == "hata_buyuk":
+                st.error(f"🛑 **Fiziksel Tutarsızlık İhtimali:** Yapay zekanın hesapladığı süre, mükemmel şartlar için geçerli olan Teorik Taylor Ömrünü ({data['t_theo']:.1f} Dk) aşıyor. Sahadaki dinamik kesme şartlarında bu durum imkansıza yakındır. Veri girişlerinizi kontrol ediniz.")
+            elif data['karsilastirma_durumu'] == "tebrikler":
+                st.success(f"🏆 **Mükemmel Optimizasyon:** Takım ömrünüz teorik fiziksel sınırlara çok yakın! CAM stratejisi ve parametreleriniz kusursuz ayarlanmış, tebrikler.")
+            elif data['karsilastirma_durumu'] == "hata_kucuk":
+                st.error(f"⚠️ **Aşırı Erken Aşınma:** Takım ömrü teorik değerin %15'inden bile daha az! Ya veriler yanlış girildi ya da tezgâhta takımı mahveden bir hata (aşırı titreşim, talaş sıkışması, yetersiz soğutma) mevcut.")
+            # ----------------------------------
+
             if data['rmse_mm'] > 0.01:
                 st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_mm']:.4f} mm). Ölçümleri teyit edin.")
             st.divider()
@@ -170,7 +208,7 @@ eksik_alanlar = []
 
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
-    tol_siniri = st.number_input("Maksimum Tolerans (mm)", value=None, format="%.4f", placeholder="Örn: 0.0050")
+    tol_siniri = st.number_input("Maksimum Tolerans (mm)", value=None, format="%g", placeholder="Örn: 0.005")
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
 
@@ -230,7 +268,7 @@ for i, sekme in enumerate(sekmeler):
             st.markdown("**Kesme ve Ölçüm Parametreleri**")
             vc = st.number_input("Kesme Hızı (Vc) [m/min]", value=None, placeholder="Örn: 400", key=f"vc_{i}")
             if vc is None: eksik_alanlar.append(f"{isim}: Kesme Hızı (Vc)")
-            fz = st.number_input("İlerleme (fz) [mm/diş]", value=None, placeholder="Örn: 0.08", format="%.4f", key=f"fz_{i}")
+            fz = st.number_input("İlerleme (fz) [mm/diş]", value=None, placeholder="Örn: 0.08", key=f"fz_{i}")
             if fz is None: eksik_alanlar.append(f"{isim}: İlerleme (fz)")
             ap = st.number_input("Eksenel Derinlik (ap) [mm]", value=None, placeholder="Örn: 5.0", key=f"ap_{i}")
             if ap is None: eksik_alanlar.append(f"{isim}: Eksenel Derinlik (ap)")
@@ -270,3 +308,6 @@ if st.button("🚀 Takım Ömrü Tahminini Başlat", use_container_width=True, t
             system.plot_dashboard()
         except Exception as e:
             st.error(f"Hata: {e}")
+
+# --- İMZA KISMI ---
+st.markdown("<br><br><div style='text-align: right; color: #888888; font-size: 14px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)

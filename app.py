@@ -8,6 +8,9 @@ import os
 
 st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 
+# --- YENİ İMZA YERİ (Ana ekranın en sol üstü. Yan menü açılınca otomatik sağa kayar) ---
+st.markdown("<div style='text-align: left; color: #888888; font-size: 14px; margin-bottom: 5px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)
+
 # --- HEADER: BAŞLIK VE LOGO ---
 col_baslik, col_logo = st.columns([5, 1])
 
@@ -16,9 +19,6 @@ with col_baslik:
     st.markdown("<p style='text-align: center; color: #888888; font-size: 16px;'>Taylor Denklemleri ve Makine Öğrenmesi Tabanlı Otonom Karar Mekanizması</p>", unsafe_allow_html=True)
 
 with col_logo:
-    # --- İMZA BURAYA TAŞINDI (Ana ekran sağ üst köşe) ---
-    st.markdown("<div style='text-align: right; color: #888888; font-size: 14px; margin-bottom: 5px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)
-    
     if os.path.exists("agtoe.png"):
         st.image("agtoe.png", width=150)
     elif os.path.exists("logo.jpg"):

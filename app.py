@@ -12,15 +12,19 @@ st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
-    # İstenmeyen yazılar temizlendi, en sade ve havalı başlık bırakıldı
-    st.title("🛠️ CMM ve CAM Entegreli Kestirimci Bakım Algoritması")
+    st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ CMM ve CAM Entegreli Kestirimci Bakım Algoritması</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #888888; font-size: 16px;'>Taylor Denklemleri ve Makine Öğrenmesi Tabanlı Otonom Karar Mekanizması</p>", unsafe_allow_html=True)
 
 with col_logo:
-    # Logo agtoe.png olarak ayarlandı
+    # --- İMZA BURAYA TAŞINDI (Ana ekran sağ üst köşe) ---
+    st.markdown("<div style='text-align: right; color: #888888; font-size: 14px; margin-bottom: 5px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)
+    
     if os.path.exists("agtoe.png"):
         st.image("agtoe.png", width=150)
     elif os.path.exists("logo.jpg"):
         st.image("logo.jpg", width=150)
+
+st.markdown("<hr style='margin-top: 0;'>", unsafe_allow_html=True)
 
 class AI_ToolLife:
     def __init__(self, tolerance):
@@ -124,7 +128,7 @@ class AI_ToolLife:
             st.warning("Gösterilecek veri yok.")
             return
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 18), facecolor='#f8f9fa')
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), facecolor='#f8f9fa')
         colors = ['#d62728', '#2ca02c', '#1f77b4', '#ff7f0e', '#9467bd']
         
         genel_max_blok = max([data['b_fut'][-1] for data in self.scenarios.values()])
@@ -134,20 +138,19 @@ class AI_ToolLife:
             col = colors[i % len(colors)]
             etiket = f"{name} ({data['mat_name']})"
 
-            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=120) 
-            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3.5, label=f"{etiket}")
+            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80) 
+            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=2.5, label=f"{etiket}")
             guven_bandi = data['rmse_mm'] * 2 
             ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.15)
 
             time_raw = [b * data['cam_cycle_time'] for b in data['b_raw']]
             time_fut = [b * data['cam_cycle_time'] for b in data['b_fut']]
-            ax2.scatter(time_raw, data['y_raw'], color=col, s=120)
-            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3.5, label=f"{etiket}")
+            ax2.scatter(time_raw, data['y_raw'], color=col, s=80)
+            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=2.5, label=f"{etiket}")
             ax2.fill_between(time_fut, np.array(data['y_fut']) - guven_bandi, np.array(data['y_fut']) + guven_bandi, color=col, alpha=0.15)
 
             st.markdown(f"### 📌 {name.upper()} | Alaşım: {data['mat_name']}")
             col1, col2, col3 = st.columns(3)
-            # İstenen metin sadeleştirmesi yapıldı
             col1.metric("Teorik Takım Ömrü", f"{data['t_theo']:.1f} Dakika")
             col2.metric("Tam Kırılma Noktası (Blok)", data['guven_araligi_metni'])
             col3.metric("Tam Kırılma Noktası (Zaman)", data['sure_araligi_metni'])
@@ -175,17 +178,17 @@ class AI_ToolLife:
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            ax.axhline(y=self.tolerance, color='black', linewidth=4, label=f"Tolerans ({self.tolerance} mm)")
-            ax.set_title(title, fontsize=18, fontweight='bold', pad=15)
-            ax.set_xlabel(xlabel, fontsize=14, fontweight='bold')
-            ax.set_ylabel("Boyutsal Sapma (mm)", fontsize=14, fontweight='bold')
+            ax.axhline(y=self.tolerance, color='black', linewidth=3, label=f"Tolerans ({self.tolerance} mm)")
+            ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
+            ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
+            ax.set_ylabel("Boyutsal Sapma (mm)", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
-            ax.legend(loc='upper left', fontsize=12)
+            ax.legend(loc='upper left', fontsize=10)
             ax.grid(True, linestyle=':', alpha=0.8)
 
         ax1.set_xlim(0, genel_max_blok)
         ax2.set_xlim(0, genel_max_time)
-        fig.tight_layout(pad=3.0) 
+        fig.tight_layout(pad=2.0) 
         st.pyplot(fig)
 
 MALZEMELER = {
@@ -204,7 +207,6 @@ eksik_alanlar = []
 
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
-    # format="%g" sayesinde "0,0100" gibi değerler "0,01" olarak görünür
     tol_siniri = st.number_input("Maksimum Tolerans (mm)", value=None, format="%g", placeholder="Örn: 0.005")
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
@@ -260,10 +262,11 @@ for i, sekme in enumerate(sekmeler):
                 if t_cap is None: eksik_alanlar.append(f"{isim}: Ortak Takım Çapı")
                 if t_dis is None: eksik_alanlar.append(f"{isim}: Ortak Takım Diş Sayısı")
                 if t_boy is None: eksik_alanlar.append(f"{isim}: Ortak Takım Kesme Boyu")
+                elif t_cap is not None and t_dis is not None and t_boy is not None: 
+                    st.info(f"Kullanılan Ortak Takım: Çap: {t_cap}mm | Diş: {t_dis} | Boy: {t_boy}mm")
 
         with colB:
             st.markdown("**Kesme ve Ölçüm Parametreleri**")
-            # format="%g" eklenerek sıfırlar temizlendi
             vc = st.number_input("Kesme Hızı (Vc) [m/min]", value=None, format="%g", placeholder="Örn: 400", key=f"vc_{i}")
             if vc is None: eksik_alanlar.append(f"{isim}: Kesme Hızı (Vc)")
             fz = st.number_input("İlerleme (fz) [mm/diş]", value=None, format="%g", placeholder="Örn: 0.08", key=f"fz_{i}")
@@ -306,6 +309,3 @@ if st.button("🚀 Takım Ömrü Tahminini Başlat", use_container_width=True, t
             system.plot_dashboard()
         except Exception as e:
             st.error(f"CMM Verisi veya sayısal format hatası: {e}. Lütfen sadece sayıları ve boşlukları kullandığınızdan emin olun.")
-
-# --- İMZA KISMI ---
-st.markdown("<br><br><div style='text-align: right; color: #888888; font-size: 14px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)

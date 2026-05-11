@@ -6,16 +6,17 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 import os
 
-st.set_page_config(page_title="TOMTAŞ LIFT-UP", layout="wide")
+st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 
-# --- HEADER: BAŞLIK VE LOGO YANYANA ---
+# --- HEADER: BAŞLIK VE LOGO ---
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
-    st.title("🛠️ TOMTAŞ LIFT-UP: CMM ve CAM Entegreli Kestirimci Bakım Algoritması")
-    st.markdown("Taylor Denklemleri ve Makine Öğrenmesi Tabanlı Otonom Karar Mekanizması")
+    # İstenmeyen yazılar temizlendi, en sade ve havalı başlık bırakıldı
+    st.title("🛠️ CMM ve CAM Entegreli Kestirimci Bakım Algoritması")
 
 with col_logo:
+    # Logo agtoe.png olarak ayarlandı
     if os.path.exists("agtoe.png"):
         st.image("agtoe.png", width=150)
     elif os.path.exists("logo.jpg"):
@@ -54,17 +55,14 @@ class AI_ToolLife:
         roots = np.roots(coefs)
         valid_roots = [r.real for r in roots if np.isreal(r) and r.real > 0]
 
-        # --- YAPAY ZEKA VE TAYLOR MANTIK KONTROLÜ İÇİN DEĞİŞKENLER ---
         karsilastirma_durumu = "normal"
         uzak_tahmin_uyarisi = False
 
         if valid_roots:
             exact_cross = min(valid_roots) 
             
-            # Kestiği yere kadar gidip 2 fazlasını her halükarda çiz (Kullanıcı RAM patlatmasın diye max 5000 sınır kondu)
             grafik_son_blok = min(int(np.ceil(exact_cross)) + 2, 5000)
             
-            # Eğer tahmin, mevcut verinin 5 katından uzağa taşıyorsa uyarı tetikle
             if exact_cross > (max_blok * 5):
                 uzak_tahmin_uyarisi = True
 
@@ -83,7 +81,6 @@ class AI_ToolLife:
                 dk += 1
                 sn = 0
 
-            # TAYLOR KIYASLAMA ALGORİTMASI
             oran = exact_time_minutes / t_theo
             if oran >= 1.0:
                 karsilastirma_durumu = "hata_buyuk"
@@ -150,13 +147,13 @@ class AI_ToolLife:
 
             st.markdown(f"### 📌 {name.upper()} | Alaşım: {data['mat_name']}")
             col1, col2, col3 = st.columns(3)
-            col1.metric("Teorik Taylor Ömrü", f"{data['t_theo']:.1f} Dakika")
+            # İstenen metin sadeleştirmesi yapıldı
+            col1.metric("Teorik Takım Ömrü", f"{data['t_theo']:.1f} Dakika")
             col2.metric("Tam Kırılma Noktası (Blok)", data['guven_araligi_metni'])
             col3.metric("Tam Kırılma Noktası (Zaman)", data['sure_araligi_metni'])
             
             st.info(f"**Operasyon Önerisi:** {data['uretim_metni']}")
             
-            # --- YENİ ZEKİ UYARI SİSTEMLERİ ---
             if data['veri_sayisi'] < 3:
                 st.error("⚠️ **Düşük Veri Yoğunluğu:** Modele 3'ten az ölçüm girilmiştir. Yapılan tahminin istatistiksel yanılma payı yüksektir.")
             
@@ -164,12 +161,11 @@ class AI_ToolLife:
                 st.warning("🔭 **Aşırı Uzak Tahmin:** Girdiğiniz verilere göre kırılma çok ileride görünüyor. Grafik çizildi ancak çok uzun vadeli regresyon tahminleri (ekstrapolasyon) yanıltıcı olabilir.")
 
             if data['karsilastirma_durumu'] == "hata_buyuk":
-                st.error(f"🛑 **Fiziksel Tutarsızlık İhtimali:** Yapay zekanın hesapladığı süre, mükemmel şartlar için geçerli olan Teorik Taylor Ömrünü ({data['t_theo']:.1f} Dk) aşıyor. Sahadaki dinamik kesme şartlarında bu durum imkansıza yakındır. Veri girişlerinizi kontrol ediniz.")
+                st.error(f"🛑 **Fiziksel Tutarsızlık İhtimali:** Yapay zekanın hesapladığı süre, mükemmel şartlar için geçerli olan Teorik Takım Ömrünü ({data['t_theo']:.1f} Dk) aşıyor. Sahadaki dinamik kesme şartlarında bu durum imkansıza yakındır. Veri girişlerinizi kontrol ediniz.")
             elif data['karsilastirma_durumu'] == "tebrikler":
                 st.success(f"🏆 **Mükemmel Optimizasyon:** Takım ömrünüz teorik fiziksel sınırlara çok yakın! CAM stratejisi ve parametreleriniz kusursuz ayarlanmış, tebrikler.")
             elif data['karsilastirma_durumu'] == "hata_kucuk":
                 st.error(f"⚠️ **Aşırı Erken Aşınma:** Takım ömrü teorik değerin %15'inden bile daha az! Ya veriler yanlış girildi ya da tezgâhta takımı mahveden bir hata (aşırı titreşim, talaş sıkışması, yetersiz soğutma) mevcut.")
-            # ----------------------------------
 
             if data['rmse_mm'] > 0.01:
                 st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_mm']:.4f} mm). Ölçümleri teyit edin.")
@@ -208,6 +204,7 @@ eksik_alanlar = []
 
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
+    # format="%g" sayesinde "0,0100" gibi değerler "0,01" olarak görünür
     tol_siniri = st.number_input("Maksimum Tolerans (mm)", value=None, format="%g", placeholder="Örn: 0.005")
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
@@ -226,9 +223,9 @@ with st.sidebar:
 
     genel_t_cap, genel_t_dis, genel_t_boy = None, None, None
     if ortak_takim:
-        genel_t_cap = st.number_input("Ortak Takım Çapı (D) [mm]", value=None, placeholder="Örn: 6.0")
+        genel_t_cap = st.number_input("Ortak Takım Çapı (D) [mm]", value=None, format="%g", placeholder="Örn: 6.0")
         genel_t_dis = st.number_input("Ortak Takım Diş Sayısı (z)", value=None, placeholder="Örn: 4")
-        genel_t_boy = st.number_input("Ortak Takım Kesme Boyu (Lc) [mm]", value=None, placeholder="Örn: 24.0")
+        genel_t_boy = st.number_input("Ortak Takım Kesme Boyu (Lc) [mm]", value=None, format="%g", placeholder="Örn: 24.0")
 
 st.markdown(f"### 📋 Test Verisi Girişi ({senaryo_sayisi} Senaryo)")
 sekmeler = st.tabs([f"{i+1}. Senaryo" for i in range(senaryo_sayisi)])
@@ -252,9 +249,9 @@ for i, sekme in enumerate(sekmeler):
                 elif s_malzeme_isim: st.info(f"Kullanılan Ortak Malzeme: {s_malzeme_isim}")
 
             if not ortak_takim:
-                t_cap = st.number_input("Takım Çapı (D) [mm]", value=None, placeholder="Örn: 6.0", key=f"tcap_{i}")
+                t_cap = st.number_input("Takım Çapı (D) [mm]", value=None, format="%g", placeholder="Örn: 6.0", key=f"tcap_{i}")
                 t_dis = st.number_input("Takım Diş Sayısı (z)", value=None, placeholder="Örn: 4", key=f"tdis_{i}")
-                t_boy = st.number_input("Takım Kesme Boyu (Lc) [mm]", value=None, placeholder="Örn: 24.0", key=f"tboy_{i}")
+                t_boy = st.number_input("Takım Kesme Boyu (Lc) [mm]", value=None, format="%g", placeholder="Örn: 24.0", key=f"tboy_{i}")
                 if t_cap is None: eksik_alanlar.append(f"{isim}: Takım Çapı")
                 if t_dis is None: eksik_alanlar.append(f"{isim}: Takım Diş Sayısı")
                 if t_boy is None: eksik_alanlar.append(f"{isim}: Takım Kesme Boyu")
@@ -266,13 +263,14 @@ for i, sekme in enumerate(sekmeler):
 
         with colB:
             st.markdown("**Kesme ve Ölçüm Parametreleri**")
-            vc = st.number_input("Kesme Hızı (Vc) [m/min]", value=None, placeholder="Örn: 400", key=f"vc_{i}")
+            # format="%g" eklenerek sıfırlar temizlendi
+            vc = st.number_input("Kesme Hızı (Vc) [m/min]", value=None, format="%g", placeholder="Örn: 400", key=f"vc_{i}")
             if vc is None: eksik_alanlar.append(f"{isim}: Kesme Hızı (Vc)")
-            fz = st.number_input("İlerleme (fz) [mm/diş]", value=None, placeholder="Örn: 0.08", key=f"fz_{i}")
+            fz = st.number_input("İlerleme (fz) [mm/diş]", value=None, format="%g", placeholder="Örn: 0.08", key=f"fz_{i}")
             if fz is None: eksik_alanlar.append(f"{isim}: İlerleme (fz)")
-            ap = st.number_input("Eksenel Derinlik (ap) [mm]", value=None, placeholder="Örn: 5.0", key=f"ap_{i}")
+            ap = st.number_input("Eksenel Derinlik (ap) [mm]", value=None, format="%g", placeholder="Örn: 5.0", key=f"ap_{i}")
             if ap is None: eksik_alanlar.append(f"{isim}: Eksenel Derinlik (ap)")
-            ae = st.number_input("Radyal Derinlik (ae) [mm]", value=None, placeholder="Örn: 5.0", key=f"ae_{i}")
+            ae = st.number_input("Radyal Derinlik (ae) [mm]", value=None, format="%g", placeholder="Örn: 5.0", key=f"ae_{i}")
             if ae is None: eksik_alanlar.append(f"{isim}: Radyal Derinlik (ae)")
             
             st.markdown("**1 Sütun İşleme Süresi**")
@@ -307,7 +305,7 @@ if st.button("🚀 Takım Ömrü Tahminini Başlat", use_container_width=True, t
                 system.add_scenario(d["isim"], d["mat_isim"], d["mat_data"]['kc'], d["mat_data"]['c_taylor'], d["t_cap"], d["t_dis"], d["t_boy"], d["vc"], d["fz"], d["ap"], d["ae"], list(range(1, len(cmm_vals) + 1)), cmm_vals, d["cam_sure"])
             system.plot_dashboard()
         except Exception as e:
-            st.error(f"Hata: {e}")
+            st.error(f"CMM Verisi veya sayısal format hatası: {e}. Lütfen sadece sayıları ve boşlukları kullandığınızdan emin olun.")
 
 # --- İMZA KISMI ---
 st.markdown("<br><br><div style='text-align: right; color: #888888; font-size: 14px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)

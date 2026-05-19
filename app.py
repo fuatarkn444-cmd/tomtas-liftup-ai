@@ -192,15 +192,15 @@ class AI_ToolLife:
         st.pyplot(fig)
 
 MALZEMELER = {
-    "Alüminyum 6061-T6": {"kc": 680, "c_taylor": 4.5e10},
-    "Alüminyum 7075-T6": {"kc": 800, "c_taylor": 3.5e10},
-    "Alüminyum 2024-T3": {"kc": 750, "c_taylor": 4.0e10},
-    "Alüminyum 5052-H32": {"kc": 600, "c_taylor": 5.0e10},
-    "Titanyum Ti-6Al-4V": {"kc": 1200, "c_taylor": 1.2e10},
-    "Titanyum Ti-5Al-2.5Sn": {"kc": 1150, "c_taylor": 1.3e10},
-    "Paslanmaz Çelik 304": {"kc": 1900, "c_taylor": 2.8e10},
-    "17-4 PH Paslanmaz": {"kc": 2200, "c_taylor": 2.0e10},
-    "AISI 4340 Alaşımlı Çelik": {"kc": 2400, "c_taylor": 1.8e10}
+    "Alüminyum 6061-T6": {"kc": 800, "c_taylor": 4.5e10},
+    "Alüminyum 7075-T6": {"kc": 975, "c_taylor": 3.5e10},
+    "Alüminyum 2024-T3": {"kc": 900, "c_taylor": 4.0e10},
+    "Alüminyum 5052-H32": {"kc": 700, "c_taylor": 5.0e10},
+    "Titanyum Ti-6Al-4V": {"kc": 2100, "c_taylor": 1.2e10},
+    "Titanyum Ti-5Al-2.5Sn": {"kc": 2050, "c_taylor": 1.3e10},
+    "Paslanmaz Çelik 304": {"kc": 2100, "c_taylor": 2.8e10},
+    "17-4 PH Paslanmaz": {"kc": 2600, "c_taylor": 2.0e10},
+    "AISI 4340 Alaşımlı Çelik": {"kc": 2700, "c_taylor": 1.8e10}
 }
 
 eksik_alanlar = []

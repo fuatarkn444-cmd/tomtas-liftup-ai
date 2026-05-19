@@ -39,7 +39,12 @@ st.markdown("""
         background: linear-gradient(90deg, #004B87, #E31837) !important;
         height: 6px !important;
     }
-
+    
+/* ÜST BOŞLUK HİZALAMASI */
+    .block-container {
+        padding-top: 0.5rem !important; 
+        max-width: 98% !important;
+    }
     /* Başlıklar */
     h1, h2, h3, h4 {
         color: #004B87 !important;

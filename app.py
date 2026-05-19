@@ -40,11 +40,6 @@ st.markdown("""
         height: 6px !important;
     }
 
-    /* ÜST BOŞLUK HİZALAMASI */
-    .block-container {
-        padding-top: 1rem !important; 
-        max-width: 98% !important;
-    }
     /* Başlıklar */
     h1, h2, h3, h4 {
         color: #004B87 !important;

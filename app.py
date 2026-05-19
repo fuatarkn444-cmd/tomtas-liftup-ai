@@ -8,6 +8,53 @@ import os
 
 st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 
+# --- CSS İLE TOMTAŞ KURUMSAL RENK ENJEKSİYONU ---
+st.markdown("""
+<style>
+    /* Başlıklar - Tomtaş Mavisi */
+    h1, h2, h3 {
+        color: #004B87 !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* Özet Metriklerin Sayıları - Tomtaş Mavisi */
+    [data-testid="stMetricValue"] {
+        color: #004B87 !important;
+    }
+
+    /* Ana Buton (Başlat Tuşu) - Mavi Arkaplan, Beyaz Yazı */
+    div.stButton > button:first-child {
+        background-color: #004B87;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    /* Butonun üzerine gelince - Tomtaş Kırmızısı */
+    div.stButton > button:first-child:hover {
+        background-color: #E31837;
+        color: #FFFFFF;
+        border: none;
+        transform: scale(1.02);
+    }
+
+    /* Aktif Sekme (Tab) Alt Çizgisi - Tomtaş Kırmızısı */
+    div[data-baseweb="tab-list"] button[aria-selected="true"] {
+        border-bottom: 3px solid #E31837 !important;
+        color: #E31837 !important;
+        font-weight: bold;
+    }
+
+    /* Yan panelin (Sidebar) sağ kenar çizgisi */
+    [data-testid="stSidebar"] {
+        border-right: 3px solid #004B87;
+    }
+</style>
+""", unsafe_allow_html=True)
+# ------------------------------------------------
+
 # --- İMZA YERİ (Ana ekranın en sol üstü) ---
 st.markdown("<div style='text-align: left; color: #888888; font-size: 14px; margin-bottom: 5px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)
 
@@ -24,7 +71,7 @@ with col_logo:
     elif os.path.exists("logo.jpg"):
         st.image("logo.jpg", width=150)
 
-st.markdown("<hr style='margin-top: 0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top: 0; border-color: #E31837;'>", unsafe_allow_html=True)
 
 class AI_ToolLife:
     def __init__(self, tolerance, birim_ad):
@@ -130,7 +177,9 @@ class AI_ToolLife:
             return
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), facecolor='#f8f9fa')
-        colors = ['#d62728', '#2ca02c', '#1f77b4', '#ff7f0e', '#9467bd']
+        
+        # Grafik renkleri Tomtaş Mavisi (#004B87) ve Kırmızısına (#E31837) uyumlu hale getirildi
+        colors = ['#E31837', '#004B87', '#1f77b4', '#ff7f0e', '#9467bd']
         
         genel_max_blok = max([data['b_fut'][-1] for data in self.scenarios.values()])
         genel_max_time = max([data['b_fut'][-1] * data['cam_cycle_time'] for data in self.scenarios.values()])
@@ -171,7 +220,6 @@ class AI_ToolLife:
             elif data['karsilastirma_durumu'] == "hata_kucuk":
                 st.error(f"⚠️ **Aşırı Erken Aşınma:** Takım ömrü teorik değerin %15'inden bile daha az! Ya veriler yanlış girildi ya da tezgâhta takımı mahveden bir hata (aşırı titreşim, talaş sıkışması, yetersiz soğutma) mevcut.")
 
-            # Birime göre dinamik RMSE hata eşiği
             rmse_sinir = 10.0 if self.birim_ad == "Mikron" else 0.01
             if data['rmse_val'] > rmse_sinir:
                 st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_val']:.4f} {self.birim_ad}). Ölçümleri teyit edin.")
@@ -211,15 +259,15 @@ eksik_alanlar = []
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
     
-    # --- YENİ: DİNAMİK BİRİM SEÇİCİ ---
     birim_secimi = st.radio("📏 Ölçüm Birimi Sistemi", ["Mikron (µm)", "Milimetre (mm)"], horizontal=True)
     is_mikron = "Mikron" in birim_secimi
     birim_ad = "Mikron" if is_mikron else "mm"
     tol_ornek = "Örn: 5" if is_mikron else "Örn: 0.005"
-    cmm_ornek = "Örn: 0.2 0.5 0.8 1.2 1.6 2" if is_mikron else "Örn: 0.0002 0.0005 0.0008 0.0012 0.0016 0.0020"
-    # ----------------------------------
-
     
+    # --- SENİN YAZDIĞIN KUSURSUZ ÖRNEK GÜNCELLEMESİ ---
+    cmm_ornek = "Örn: 0.2 0.5 0.8 1.2 1.6 2" if is_mikron else "Örn: 0.0002 0.0005 0.0008 0.0012 0.0016 0.0020"
+    # ---------------------------------------------------
+
     tol_siniri = st.number_input(f"Maksimum Tolerans ({birim_ad})", value=None, format="%g", placeholder=tol_ornek)
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
@@ -299,7 +347,6 @@ for i, sekme in enumerate(sekmeler):
             
             cam_sure = cam_dk + (cam_sn if cam_sn else 0) / 60.0 if cam_dk is not None else None
             
-            # Dinamik CMM Veri girişi (Mikron/mm ve placeholder'lar birime göre değişir)
             cmm_str = st.text_input(f"CMM Verileri ({birim_ad}, Boşluklu)", value="", placeholder=cmm_ornek, key=f"cmm_{i}")
             if not cmm_str: eksik_alanlar.append(f"{isim}: CMM Verileri")
 
@@ -317,7 +364,6 @@ if st.button("🚀 Takım Ömrü Tahminini Başlat", use_container_width=True, t
         st.error(f"⚠️ Lütfen analizi başlatmadan önce aşağıdaki eksik bilgileri doldurunuz:\n\n{hata_metni}")
     else:
         try:
-            # Sistemi başlatırken kullanıcının seçtiği birimi de gönderiyoruz
             system = AI_ToolLife(tolerance=tol_siniri, birim_ad=birim_ad)
             for d in senaryo_verileri:
                 cmm_vals = [float(x) for x in d["cmm_str"].replace(',', ' ').split()]

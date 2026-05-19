@@ -42,7 +42,7 @@ st.markdown("""
     
 /* ÜST BOŞLUK HİZALAMASI */
     .block-container {
-        padding-top: 0.5rem !important; 
+        padding-top: 0rem !important; 
         max-width: 98% !important;
     }
     /* Başlıklar */

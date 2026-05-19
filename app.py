@@ -8,7 +8,7 @@ import os
 
 st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 
-# --- YENİ İMZA YERİ (Ana ekranın en sol üstü. Yan menü açılınca otomatik sağa kayar) ---
+# --- İMZA YERİ (Ana ekranın en sol üstü) ---
 st.markdown("<div style='text-align: left; color: #888888; font-size: 14px; margin-bottom: 5px;'><i>by Fuat Arıkan</i></div>", unsafe_allow_html=True)
 
 # --- HEADER: BAŞLIK VE LOGO ---
@@ -52,7 +52,7 @@ class AI_ToolLife:
         model = LinearRegression().fit(X_poly, y)
         
         mse = mean_squared_error(y, model.predict(X_poly))
-        rmse_mm = np.sqrt(mse)
+        rmse_mikron = np.sqrt(mse) # Artık veri mikron olduğu için sapma da mikron cinsinden
 
         a, b, c = model.coef_[2], model.coef_[1], model.intercept_ - self.tolerance
         coefs = [a, b, c] if abs(a) > 1e-15 else [b, c]
@@ -113,7 +113,7 @@ class AI_ToolLife:
         self.scenarios[name] = {
             'mat_name': mat_name, 'b_raw': blocks, 'y_raw': wear_data,
             'b_fut': future_blocks.flatten(), 'y_fut': future_y,
-            'rmse_mm': rmse_mm, 't_theo': t_theo,
+            'rmse_mikron': rmse_mikron, 't_theo': t_theo,
             'guven_araligi_metni': guven_araligi_metni,
             'sure_araligi_metni': sure_araligi_metni,
             'uretim_metni': uretim_metni,
@@ -140,7 +140,7 @@ class AI_ToolLife:
 
             ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80) 
             ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=2.5, label=f"{etiket}")
-            guven_bandi = data['rmse_mm'] * 2 
+            guven_bandi = data['rmse_mikron'] * 2 
             ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.15)
 
             time_raw = [b * data['cam_cycle_time'] for b in data['b_raw']]
@@ -170,18 +170,20 @@ class AI_ToolLife:
             elif data['karsilastirma_durumu'] == "hata_kucuk":
                 st.error(f"⚠️ **Aşırı Erken Aşınma:** Takım ömrü teorik değerin %15'inden bile daha az! Ya veriler yanlış girildi ya da tezgâhta takımı mahveden bir hata (aşırı titreşim, talaş sıkışması, yetersiz soğutma) mevcut.")
 
-            if data['rmse_mm'] > 0.01:
-                st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_mm']:.4f} mm). Ölçümleri teyit edin.")
+            # Hata limiti artık 0.01 mm yerine 10 mikron olarak ayarlandı
+            if data['rmse_mikron'] > 10.0:
+                st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_mikron']:.2f} Mikron). Ölçümleri teyit edin.")
             st.divider()
 
         y_limit = self.tolerance * 1.5
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            ax.axhline(y=self.tolerance, color='black', linewidth=3, label=f"Tolerans ({self.tolerance} mm)")
+            ax.axhline(y=self.tolerance, color='black', linewidth=3, label=f"Tolerans ({self.tolerance} Mikron)")
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
-            ax.set_ylabel("Boyutsal Sapma (mm)", fontsize=12, fontweight='bold')
+            # Y ekseni MİKRON olarak güncellendi
+            ax.set_ylabel("Boyutsal Sapma (Mikron)", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
             ax.grid(True, linestyle=':', alpha=0.8)
@@ -191,6 +193,7 @@ class AI_ToolLife:
         fig.tight_layout(pad=2.0) 
         st.pyplot(fig)
 
+# --- YENİ MALZEME DEĞERLERİ KÜTÜPHANESİ ---
 MALZEMELER = {
     "Alüminyum 6061-T6": {"kc": 800, "c_taylor": 4.5e10},
     "Alüminyum 7075-T6": {"kc": 975, "c_taylor": 3.5e10},
@@ -207,7 +210,8 @@ eksik_alanlar = []
 
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
-    tol_siniri = st.number_input("Maksimum Tolerans (mm)", value=None, format="%g", placeholder="Örn: 0.005")
+    # Tolerans girdisi Mikron yapıldı
+    tol_siniri = st.number_input("Maksimum Tolerans (Mikron)", value=None, format="%g", placeholder="Örn: 5")
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
 
@@ -285,7 +289,8 @@ for i, sekme in enumerate(sekmeler):
                 cam_sn = st.number_input("Saniye (Opsiyonel)", value=None, placeholder="Örn: 15", min_value=0, max_value=59, step=1, key=f"cam_sn_{i}")
             
             cam_sure = cam_dk + (cam_sn if cam_sn else 0) / 60.0 if cam_dk is not None else None
-            cmm_str = st.text_input("CMM Verileri (Boşluklu)", value="", placeholder="Örn: 0.0001 0.0002", key=f"cmm_{i}")
+            # Veri girişi MİKRON olarak düzeltildi
+            cmm_str = st.text_input("CMM Verileri (Mikron, Boşluklu)", value="", placeholder="Örn: 1 2.5 4.2", key=f"cmm_{i}")
             if not cmm_str: eksik_alanlar.append(f"{isim}: CMM Verileri")
 
         senaryo_verileri.append({

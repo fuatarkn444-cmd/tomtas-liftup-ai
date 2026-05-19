@@ -216,7 +216,7 @@ with st.sidebar:
     is_mikron = "Mikron" in birim_secimi
     birim_ad = "Mikron" if is_mikron else "mm"
     tol_ornek = "Örn: 5" if is_mikron else "Örn: 0.005"
-    cmm_ornek = "Örn: 1 2.5 4.2" if is_mikron else "Örn: 0.001 0.0025 0.0042"
+    cmm_ornek = "Örn: 0.2 0.5 0.8 1.2 1.6 2" if is_mikron else "Örn: 0.0002 0.0005 0.0008 0.0012 0.0016 0.0020"
     # ----------------------------------
 
     tol_siniri = st.number_input(f"Maksimum Tolerans ({birim_ad})", value=None, format="%g", placeholder=tol_ornek)

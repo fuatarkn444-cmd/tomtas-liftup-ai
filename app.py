@@ -6,32 +6,21 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 import os
 
-st.set_page_config(page_title="TOMTAŞ Kestirimci Bakım", layout="wide")
+st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 
-# --- CSS İLE TOMTAŞ KURUMSAL TEMA VE GÖRSEL FİGÜRLER ENJEKSİYONU ---
+# --- CSS İLE TEMİZ TEMA VE HAVACILIK DETAYLARI ENJEKSİYONU ---
 st.markdown("""
 <style>
-    /* ANA ARKA PLAN - Teknik Çizim Grid Filigranı */
+    /* Reset Background for perfect visibility */
     .stApp {
-        background-image: 
-            linear-gradient(45deg, #f0f2f6 25%, transparent 25%), 
-            linear-gradient(-45deg, #f0f2f6 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #f0f2f6 75%),
-            linear-gradient(-45deg, transparent 75%, #f0f2f6 75%),
-            /* Köşe Figürü: Pergel ve Gönye (Filigran) */
-            url('https://cdn-icons-png.flaticon.com/512/1087/1087922.png');
-        background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 300px 300px;
-        background-position: 0 0, 0 10px, 10px -10px, -10px 0px, calc(100% + 50px) calc(100% + 50px);
-        background-repeat: repeat, repeat, repeat, repeat, no-repeat;
-        background-attachment: fixed;
-        opacity: 0.95;
+        background: white !important;
     }
 
     /* Başlıklar - Tomtaş Mavisi (#004B87) */
-    h1, h2, h3 {
+    h1, h2, h3, h4 {
         color: #004B87 !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-weight: 800;
+        font-weight: 700;
     }
     
     /* Özet Metriklerin Sayıları */
@@ -46,70 +35,67 @@ st.markdown("""
         border: none;
         border-radius: 4px;
         font-weight: bold;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
     }
     
     div.stButton > button:first-child:hover {
-        background-color: #E31837; /* Tomtaş Kırmızısı */
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        background-color: #E31837; /* Kırmızı */
+        color: #FFFFFF;
+        border: none;
     }
 
-    /* Aktif Sekme (Tab) */
+    /* Aktif Sekme (Tab) Alt Çizgisi */
     div[data-baseweb="tab-list"] button[aria-selected="true"] {
         border-bottom: 3px solid #E31837 !important;
         color: #E31837 !important;
+        font-weight: bold;
+    }
+
+    /* Enforce black text in input fields for safety */
+    .stTextInput>div>div>input {
+        color: black !important;
+    }
+    .stNumberInput>div>div>input {
+        color: black !important;
     }
 
     /* YAN PANEL (SIDEBAR) STİLİ */
     [data-testid="stSidebar"] {
         background-color: #f8f9fa;
-        border-right: 4px solid #004B87;
+        border-right: 3px solid #004B87;
     }
 
-    /* YAN PANEL ÜSTÜ - Tomtaş Çapraz Şeritleri (Daha kalın ve canlı) */
+    /* "REMOVE BEFORE FLIGHT" Etiketi (Yan Menü Üstü) */
     [data-testid="stSidebar"]::before {
-        content: "";
+        content: "REMOVE BEFORE FLIGHT";
         display: block;
-        height: 15px;
-        background: repeating-linear-gradient(
-            45deg,
-            #004B87,
-            #004B87 15px,
-            #E31837 15px,
-            #E31837 30px
-        );
-        margin-bottom: 20px;
-    }
-
-    /* Adın Yazdığı İmza Alanı - Havacılık Etiketi Stili */
-    .by-fuat {
-        text-align: left; 
-        color: white; 
-        font-size: 12px; 
-        background-color: #E31837; 
-        padding: 3px 8px; 
-        border-radius: 3px; 
-        font-family: 'Courier New', Courier, monospace;
+        background-color: #E31837;
+        color: white;
+        font-family: monospace;
         font-weight: bold;
-        display: inline-block;
-        margin-bottom: 10px;
-        box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        text-align: center;
+        padding: 5px;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        border-radius: 0 0 5px 5px;
     }
 </style>
 """, unsafe_allow_html=True)
 # ------------------------------------------------
 
-# --- İMZA YERİ (Ana ekranın en sol üstü) ---
-st.markdown("<div class='by-fuat'>by Fuat Arıkan</div>", unsafe_allow_html=True)
+# --- İMZA YERİ (Ana ekranın en sol üstü) - Havacılık Etiketi Stili ---
+st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 2px 10px; font-family: monospace; font-weight: bold; border-radius: 3px; font-size: 12px;'>by Fuat Arıkan | ALGORITHM DEVELOPER</div>", unsafe_allow_html=True)
 
 # --- HEADER: BAŞLIK VE LOGO ---
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
     st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ CMM ve CAM Entegreli Kestirimci Bakım Algoritması</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #555555; font-size: 16px; font-style: italic;'>Taylor Denklemleri ve Makine Öğrenmesi Tabanlı Otonom Karar Mekanizması</p>", unsafe_allow_html=True)
+    
+    # --- YENİ SLOGAN ALANI (Ana başlığın hemen altı) ---
+    st.markdown("<hr style='margin-top: 5px; margin-bottom: 5px; border-color: #E31837; border-width: 1px;'>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #004B87; font-size: 16px; font-weight: bold; font-style: italic; letter-spacing: 1px;'>Precision in Engineering, Excellence in Aviation.</p>", unsafe_allow_html=True)
+    # -----------------------------------------------------
 
 with col_logo:
     if os.path.exists("agtoe.png"):
@@ -117,7 +103,7 @@ with col_logo:
     elif os.path.exists("logo.jpg"):
         st.image("logo.jpg", width=150)
 
-st.markdown("<hr style='margin-top: 0; border-color: #E31837; border-width: 2px;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top: 0; border-color: #004B87; border-width: 2px;'>", unsafe_allow_html=True)
 
 class AI_ToolLife:
     def __init__(self, tolerance, birim_ad):
@@ -221,7 +207,7 @@ class AI_ToolLife:
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), facecolor='#f8f9fa')
         
-        # Grafik renkleri Tomtaş Kırmızısı (#E31837) ve Mavisi (#004B87)
+        # Grafik renkleri Tomtaş Kırmızısı (#E31837) ve Mavisi (#004B87) - Tekrar optimize edildi
         colors = ['#E31837', '#004B87', '#d62728', '#1f77b4', '#ff7f0e']
         
         genel_max_blok = max([data['b_fut'][-1] for data in self.scenarios.values()])
@@ -231,16 +217,16 @@ class AI_ToolLife:
             col = colors[i % len(colors)]
             etiket = f"{name} ({data['mat_name']})"
 
-            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80, edgecolors='black', zorder=3) 
-            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{etiket}", zorder=2)
+            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80, edgecolors='black') 
+            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{etiket}")
             guven_bandi = data['rmse_val'] * 2 
-            ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.1)
+            ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.15)
 
             time_raw = [b * data['cam_cycle_time'] for b in data['b_raw']]
             time_fut = [b * data['cam_cycle_time'] for b in data['b_fut']]
-            ax2.scatter(time_raw, data['y_raw'], color=col, s=80, edgecolors='black', zorder=3)
-            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3, label=f"{etiket}", zorder=2)
-            ax2.fill_between(time_fut, np.array(data['y_fut']) - guven_bandi, np.array(data['y_fut']) + guven_bandi, color=col, alpha=0.1)
+            ax2.scatter(time_raw, data['y_raw'], color=col, s=80, edgecolors='black')
+            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3, label=f"{etiket}")
+            ax2.fill_between(time_fut, np.array(data['y_fut']) - guven_bandi, np.array(data['y_fut']) + guven_bandi, color=col, alpha=0.15)
 
             st.markdown(f"### 📌 {name.upper()} | Alaşım: {data['mat_name']}")
             col1, col2, col3 = st.columns(3)
@@ -254,7 +240,7 @@ class AI_ToolLife:
                 st.error("⚠️ **Düşük Veri Yoğunluğu:** Modele 3'ten az ölçüm girilmiştir.")
             
             if data['uzak_tahmin_uyarisi']:
-                st.warning("🔭 **Aşırı Uzak Tahmin:** Uzun vadeli tahminler yanıltıcı olabilir.")
+                st.warning("🔭 **Aşırı Uzak Tahmin:** Uzun vadeli regresyon tahminleri yanıltıcı olabilir.")
 
             if data['karsilastirma_durumu'] == "hata_buyuk":
                 st.error(f"🛑 **Fiziksel Tutarsızlık İhtimali:** Hesaplanan süre Teorik Takım Ömrünü ({data['t_theo']:.1f} Dk) aşıyor.")
@@ -265,20 +251,20 @@ class AI_ToolLife:
 
             rmse_sinir = 10.0 if self.birim_ad == "Mikron" else 0.01
             if data['rmse_val'] > rmse_sinir:
-                st.warning(f"⚠️ **Veri Anomalyası:** Sapma: {data['rmse_val']:.4f} {self.birim_ad}.")
+                st.warning(f"⚠️ **Veri Anomalyası:** CMM sapması limitin üzerinde (Sapma: {data['rmse_val']:.4f} {self.birim_ad}).")
             st.divider()
 
         y_limit = self.tolerance * 1.5
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            ax.axhline(y=self.tolerance, color='black', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})", zorder=1)
+            ax.axhline(y=self.tolerance, color='black', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})")
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
             ax.set_ylabel(f"Boyutsal Sapma ({self.birim_ad})", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
-            ax.grid(True, linestyle=':', alpha=0.6, zorder=0)
+            ax.grid(True, linestyle=':', alpha=0.8)
 
         ax1.set_xlim(0, genel_max_blok)
         ax2.set_xlim(0, genel_max_time)
@@ -300,15 +286,16 @@ MALZEMELER = {
 eksik_alanlar = []
 
 with st.sidebar:
-    # --- YAN PANEL BAŞLIĞI VE İMZA ---
     st.header("⚙️ Genel Ayarlar")
-    # ---------------------------------
     
     birim_secimi = st.radio("📏 Ölçüm Birimi Sistemi", ["Mikron (µm)", "Milimetre (mm)"], horizontal=True)
     is_mikron = "Mikron" in birim_secimi
     birim_ad = "Mikron" if is_mikron else "mm"
     tol_ornek = "Örn: 5" if is_mikron else "Örn: 0.005"
+    
+    # --- SENİN YAZDIĞIN KUSURSUZ ÖRNEK GÜNCELLEMESİ ---
     cmm_ornek = "Örn: 0.2 0.5 0.8 1.2 1.6 2" if is_mikron else "Örn: 0.0002 0.0005 0.0008 0.0012 0.0016 0.0020"
+    # ---------------------------------------------------
 
     tol_siniri = st.number_input(f"Maksimum Tolerans ({birim_ad})", value=None, format="%g", placeholder=tol_ornek)
     if tol_siniri is None:

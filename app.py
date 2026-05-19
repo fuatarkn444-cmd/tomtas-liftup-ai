@@ -52,7 +52,7 @@ class AI_ToolLife:
         model = LinearRegression().fit(X_poly, y)
         
         mse = mean_squared_error(y, model.predict(X_poly))
-        rmse_mikron = np.sqrt(mse) # Artık veri mikron olduğu için sapma da mikron cinsinden
+        rmse_mikron = np.sqrt(mse) 
 
         a, b, c = model.coef_[2], model.coef_[1], model.intercept_ - self.tolerance
         coefs = [a, b, c] if abs(a) > 1e-15 else [b, c]
@@ -170,7 +170,6 @@ class AI_ToolLife:
             elif data['karsilastirma_durumu'] == "hata_kucuk":
                 st.error(f"⚠️ **Aşırı Erken Aşınma:** Takım ömrü teorik değerin %15'inden bile daha az! Ya veriler yanlış girildi ya da tezgâhta takımı mahveden bir hata (aşırı titreşim, talaş sıkışması, yetersiz soğutma) mevcut.")
 
-            # Hata limiti artık 0.01 mm yerine 10 mikron olarak ayarlandı
             if data['rmse_mikron'] > 10.0:
                 st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_mikron']:.2f} Mikron). Ölçümleri teyit edin.")
             st.divider()
@@ -182,7 +181,6 @@ class AI_ToolLife:
             ax.axhline(y=self.tolerance, color='black', linewidth=3, label=f"Tolerans ({self.tolerance} Mikron)")
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
-            # Y ekseni MİKRON olarak güncellendi
             ax.set_ylabel("Boyutsal Sapma (Mikron)", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
@@ -193,7 +191,6 @@ class AI_ToolLife:
         fig.tight_layout(pad=2.0) 
         st.pyplot(fig)
 
-# --- YENİ MALZEME DEĞERLERİ KÜTÜPHANESİ ---
 MALZEMELER = {
     "Alüminyum 6061-T6": {"kc": 800, "c_taylor": 4.5e10},
     "Alüminyum 7075-T6": {"kc": 975, "c_taylor": 3.5e10},
@@ -210,7 +207,7 @@ eksik_alanlar = []
 
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
-    # Tolerans girdisi Mikron yapıldı
+    # BURADA "MİKRON" YAZIYOR VE "Örn: 5" VAR
     tol_siniri = st.number_input("Maksimum Tolerans (Mikron)", value=None, format="%g", placeholder="Örn: 5")
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
@@ -229,6 +226,7 @@ with st.sidebar:
 
     genel_t_cap, genel_t_dis, genel_t_boy = None, None, None
     if ortak_takim:
+        # Takım ölçüleri standart mm'dir, bu yüzden mm bırakıldı.
         genel_t_cap = st.number_input("Ortak Takım Çapı (D) [mm]", value=None, format="%g", placeholder="Örn: 6.0")
         genel_t_dis = st.number_input("Ortak Takım Diş Sayısı (z)", value=None, placeholder="Örn: 4")
         genel_t_boy = st.number_input("Ortak Takım Kesme Boyu (Lc) [mm]", value=None, format="%g", placeholder="Örn: 24.0")
@@ -267,7 +265,7 @@ for i, sekme in enumerate(sekmeler):
                 if t_dis is None: eksik_alanlar.append(f"{isim}: Ortak Takım Diş Sayısı")
                 if t_boy is None: eksik_alanlar.append(f"{isim}: Ortak Takım Kesme Boyu")
                 elif t_cap is not None and t_dis is not None and t_boy is not None: 
-                    st.info(f"Kullanılan Ortak Takım: Çap: {t_cap}mm | Diş: {t_dis} | Boy: {t_boy}mm")
+                    st.info(f"Kullanılan Ortak Takım: Çap: {t_cap} mm | Diş: {t_dis} | Boy: {t_boy} mm")
 
         with colB:
             st.markdown("**Kesme ve Ölçüm Parametreleri**")
@@ -289,7 +287,8 @@ for i, sekme in enumerate(sekmeler):
                 cam_sn = st.number_input("Saniye (Opsiyonel)", value=None, placeholder="Örn: 15", min_value=0, max_value=59, step=1, key=f"cam_sn_{i}")
             
             cam_sure = cam_dk + (cam_sn if cam_sn else 0) / 60.0 if cam_dk is not None else None
-            # Veri girişi MİKRON olarak düzeltildi
+            
+            # BURADA "MİKRON" YAZIYOR VE SİLİK YAZIDA ONDALIKLAR SİLİNDİ
             cmm_str = st.text_input("CMM Verileri (Mikron, Boşluklu)", value="", placeholder="Örn: 1 2.5 4.2", key=f"cmm_{i}")
             if not cmm_str: eksik_alanlar.append(f"{isim}: CMM Verileri")
 

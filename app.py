@@ -37,7 +37,7 @@ st.markdown("""
     /* ÜST TAVAN ŞERİDİ (PREMIUM BANNER) - Yan menüyle hizalı */
     header[data-testid="stHeader"] {
         background: linear-gradient(90deg, #004B87, #E31837) !important;
-        height: 6px !important;
+        height: 4px !important;
     }
     
     /* Başlıklar */

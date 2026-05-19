@@ -31,14 +31,20 @@ if st.session_state.ilk_giris:
     st.session_state.ilk_giris = False
 # ----------------------------------------
 
-# --- CSS İLE TEMA VE DÜZEN ENJEKSİYONU ---
+# --- CSS İLE GÖRSEL DENGE, TAVAN ŞERİDİ VE SAĞ PANO ENJEKSİYONU ---
 st.markdown("""
 <style>
-    /* ÜST BOŞLUĞU YOK ETME VE EKRANI GENİŞLETME */
+    /* ÜST TAVAN ŞERİDİ (PREMIUM BANNER) */
+    header[data-testid="stHeader"] {
+        background: linear-gradient(90deg, #004B87, #E31837) !important;
+        height: 6px !important; /* Çok şık ve ince bir tavan çizgisi */
+    }
+
+    /* ÜST BOŞLUK DÜZELTİLDİ - İmzan artık net görünecek */
     .block-container {
-        padding-top: 1.5rem !important;
+        padding-top: 3.5rem !important; 
         padding-bottom: 2rem !important;
-        max-width: 96% !important;
+        max-width: 98% !important; /* Ekranı daha da yaydık */
     }
 
     /* Başlıklar */
@@ -111,11 +117,22 @@ st.markdown("""
         border-radius: 0 0 5px 5px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
+
+    /* YENİ: SAĞ PANEL KAPSÜLÜ (RIGHT CARD UI) */
+    .right-panel-card {
+        background-color: rgba(136, 136, 136, 0.06); /* Sidebar ile aynı hissiyat */
+        border-left: 4px solid #004B87;
+        border-top: 4px solid #E31837;
+        border-radius: 8px;
+        padding: 20px;
+        height: 100%;
+        box-shadow: -3px 4px 15px rgba(0,0,0,0.05);
+    }
 </style>
 """, unsafe_allow_html=True)
 # ------------------------------------------------
 
-# --- İMZA YERİ ---
+# --- İMZA YERİ (Ana ekranın en sol üstü) ---
 st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 3px 12px; font-family: monospace; font-weight: bold; border-radius: 4px; font-size: 13px; box-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>by Fuat Arıkan</div>", unsafe_allow_html=True)
 
 # --- HEADER ---
@@ -356,7 +373,7 @@ for i, sekme in enumerate(sekmeler):
     with sekme:
         isim = st.text_input(f"Senaryo Adı", value=f"Senaryo {i+1}", key=f"isim_{i}")
         
-        # --- SAĞ BOŞLUĞU DOLDURAN 3 SÜTUNLU YAPI ---
+        # --- 3 SÜTUNLU YAPI (Sağdaki boşluğu doldurmak için) ---
         colA, colB, colC = st.columns([1.3, 1.3, 1])
         
         with colA:
@@ -406,27 +423,26 @@ for i, sekme in enumerate(sekmeler):
             cmm_str = st.text_input(f"CMM Verileri ({birim_ad}, Boşluklu)", value="", placeholder=cmm_ornek, key=f"cmm_{i}")
             if not cmm_str: eksik_alanlar.append(f"{isim}: CMM Verileri")
 
-        # --- YENİ SAĞ PANEL (Fizik Motoru Detayları) ---
+        # --- GÖRSEL SAĞ PANO (RIGHT CARD) YERLEŞİMİ ---
         with colC:
-            st.markdown("**🧠 Yapay Zeka & Fizik Motoru**")
+            # HTML İle Özel Çerçevelenmiş Kutu 
+            tol_text = f"{tol_siniri} {birim_ad}" if tol_siniri else "Belirlenmedi"
+            mat_text = f"<b>Alaşım:</b> {s_malzeme_isim}<br><b>Kc:</b> {s_malzeme['kc']} MPa<br><b>Taylor Sabiti:</b> {s_malzeme['c_taylor']:.1e}" if s_malzeme else "Malzeme Bekleniyor..."
             
-            # Tolerans Durumu
-            if tol_siniri:
-                st.success(f"**Tolerans Sınırı:** {tol_siniri} {birim_ad}")
-            else:
-                st.warning("Tolerans belirlenmedi.")
-
-            # Alaşım Fiziksel Verileri
-            if s_malzeme:
-                st.info(f"**Aktif Alaşım:** {s_malzeme_isim}\n\n**Özgül Kesme (Kc):** {s_malzeme['kc']} MPa\n\n**Taylor Sabiti:** {s_malzeme['c_taylor']:.1e}")
-            else:
-                st.warning("Malzeme seçimi bekleniyor...")
+            st.markdown(f"""
+            <div class='right-panel-card'>
+                <h4 style="margin-top: 0; color: #004B87; border-bottom: 2px solid rgba(136,136,136,0.2); padding-bottom: 10px;">🧠 Akıllı Fizik Motoru</h4>
+                <p style="font-size: 14px; margin-bottom: 5px;"><b>Aktif Tolerans:</b></p>
+                <div style="color: #E31837; font-size: 18px; font-weight: bold; margin-bottom: 15px;">{tol_text}</div>
                 
-            # Arka plan bilgilendirme kartı
-            st.markdown("""
-            <div style='background-color:rgba(248, 249, 250, 0.05); padding:10px; border-radius:5px; font-size:12px; border-left: 3px solid #004B87; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); margin-top: 10px;'>
-            <b>Arka Plan Matematiği:</b><br>
-            Sistem, girilen CAM verilerini kullanarak anlık talaş kalınlığını hesaplar. Elde edilen efektif kesme kuvveti, Taylor Takım Ömrü denklemi ile entegre edilerek teorik kırılma ufku belirlenir. Makine öğrenmesi modeli CMM sapmalarını bu fiziksel ufukla kıyaslar.
+                <p style="font-size: 14px; margin-bottom: 5px;"><b>Fiziksel Parametreler:</b></p>
+                <div style="background-color: rgba(0, 75, 135, 0.08); padding: 10px; border-radius: 5px; font-size: 13px; margin-bottom: 15px;">
+                    {mat_text}
+                </div>
+                
+                <div style="font-size: 12px; color: gray; border-left: 2px solid #E31837; padding-left: 10px; font-style: italic;">
+                    Sistem, anlık talaş kalınlığını hesaplar ve efektif kesme kuvvetini Taylor denklemi ile harmanlayarak Kırılma Ufkunu belirler.
+                </div>
             </div>
             """, unsafe_allow_html=True)
 

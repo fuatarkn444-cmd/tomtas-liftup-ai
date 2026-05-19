@@ -6,7 +6,8 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 import os
 
-st.set_page_config(page_title="LIFT-UP Kestirimci Bakım", layout="wide")
+# --- PAGE CONFIGURATION WITH ICON ---
+st.set_page_config(page_title="LIFT-UP Kestirimci Bakım", page_icon="✈️", layout="wide")
 
 # --- KARŞILAMA EKRANI (POP-UP) MANTIĞI ---
 @st.dialog("✈️ LIFT-UP Sistemine Hoş Geldiniz")
@@ -17,7 +18,7 @@ def rehber_dialog():
     ### 🛠️ Nasıl Kullanılır?
     1. **Birim ve Tolerans:** Sol menüden ölçüm biriminizi (Mikron/mm) ve tezgâhın maksimum aşınma toleransını girin.
     2. **Parametreler:** Kullanacağınız malzeme, takım ölçüleri ve CAM kesme verilerini eksiksiz doldurun.
-    3. **CMM Verileri:** Ölçtüğünüz aşınma değerlerini aralarında boşluk bırakarak yazın *(Örn: 2.5 4.1 6.3)*.
+    3. **CMM Verileri:** Ölçtüğünüz aşınma değerlerini aralarında boşluk bırakarak yazın *(Örn: 0.2 0.5 0.8...)*.
     4. **Analiz:** 'Tahmini Başlat' butonuna basın ve yapay zekanın operasyon önerilerini inceleyin.
     
     *(Bu bilgilendirme penceresini sağ üstteki 'X' işaretine basarak kapatabilirsiniz.)*
@@ -32,13 +33,34 @@ if st.session_state.ilk_giris:
     st.session_state.ilk_giris = False
 # ----------------------------------------
 
-# --- CSS İLE TEMA ENJEKSİYONU (DARK MODE UYUMLU) ---
+# --- CSS İLE TEMA VE RENKLİ DETAYLAR ENJEKSİYONU (DARK MODE UYUMLU) ---
 st.markdown("""
 <style>
-    /* Başlıklar */
+    /* Başlıklar - Tomtaş Mavisi (#004B87) */
     h1, h2, h3, h4 {
+        color: #004B87 !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-weight: 700;
+    }
+
+    /* METRİK KARTLARI - Renkli Dokunuş ve Gölge */
+    [data-testid="metric-container"] {
+        border: 1px solid rgba(136, 136, 136, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+        background-color: rgba(248, 249, 250, 0.05); /* Çok hafif arkaplan (Dark mode uyumlu) */
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+    [data-testid="metric-container"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 3px 3px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Metrik Sayıları - Tomtaş Mavisi */
+    [data-testid="stMetricValue"] {
+        color: #004B87 !important;
+        font-weight: 800;
     }
 
     /* Ana Buton (Başlat Tuşu) */
@@ -48,24 +70,26 @@ st.markdown("""
         border: none;
         border-radius: 6px;
         font-weight: bold;
+        padding: 10px 24px;
         transition: all 0.3s ease;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
     
     div.stButton > button:first-child:hover {
-        background: linear-gradient(90deg, #E31837, #ff3333);
+        background: linear-gradient(90deg, #E31837, #ff3333); /* Kırmızıya geçiş */
         color: #FFFFFF;
-        transform: translateY(-2px);
+        transform: scale(1.03); /* Hafif büyüme */
+        box-shadow: 0 6px 10px rgba(0,0,0,0.25);
     }
 
-    /* Aktif Sekme (Tab) Alt Çizgisi */
+    /* Aktif Sekme (Tab) Alt Çizgisi - Tomtaş Kırmızısı */
     div[data-baseweb="tab-list"] button[aria-selected="true"] {
         border-bottom: 3px solid #E31837 !important;
         color: #E31837 !important;
         font-weight: bold;
     }
 
-    /* YAN PANEL (SIDEBAR) STİLİ */
+    /* YAN PANEL (SIDEBAR) STİLİ - Kırmızı Kenarlık */
     [data-testid="stSidebar"] {
         border-right: 3px solid #E31837;
     }
@@ -79,28 +103,27 @@ st.markdown("""
         font-family: monospace;
         font-weight: bold;
         text-align: center;
-        padding: 5px;
-        letter-spacing: 1px;
+        padding: 6px;
+        letter-spacing: 1.5px;
         margin-bottom: 20px;
         border-radius: 0 0 5px 5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 </style>
 """, unsafe_allow_html=True)
 # ------------------------------------------------
 
 # --- İMZA YERİ (Ana ekranın en sol üstü) ---
-st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 2px 10px; font-family: monospace; font-weight: bold; border-radius: 3px; font-size: 12px; box-shadow: 1px 1px 3px rgba(0,0,0,0.3);'>by Fuat Arıkan</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 3px 12px; font-family: monospace; font-weight: bold; border-radius: 4px; font-size: 13px; box-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>by Fuat Arıkan</div>", unsafe_allow_html=True)
 
 # --- HEADER: BAŞLIK VE LOGO ---
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
-    # Başlık Kısaltıldı ve Vurucu Hale Getirildi
     st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ LIFT-UP: Kestirimci Bakım Sistemi</h2>", unsafe_allow_html=True)
     
-    # Renk Geçişli (Gradient) Şık Çizgi
-    st.markdown("<hr style='height: 3px; background: linear-gradient(90deg, transparent, #004B87, #E31837, transparent); border: none; margin-top: 10px; margin-bottom: 5px;'>", unsafe_allow_html=True)
+    # Renk Geçişli Şık Çizgi
+    st.markdown("<hr style='height: 3px; background: linear-gradient(90deg, transparent, #004B87 30%, #E31837 70%, transparent); border: none; margin-top: 10px; margin-bottom: 5px;'>", unsafe_allow_html=True)
     
     # Slogan
     st.markdown("<p style='text-align: center; color: #888888; font-size: 15px; font-weight: bold; font-style: italic; letter-spacing: 1px;'>Precision in Engineering, Excellence in Aviation.</p>", unsafe_allow_html=True)
@@ -215,33 +238,41 @@ class AI_ToolLife:
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
         
-        colors = ['#004B87', '#1f77b4', '#d62728', '#2ca02c', '#ff7f0e']
+        # Grafik renkleri Tomtaş Kırmızısı (#E31837) ve Mavisi (#004B87) - Canlandırıldı
+        colors = ['#E31837', '#004B87', '#d62728', '#1f77b4', '#ff7f0e']
         
         genel_max_blok = max([data['b_fut'][-1] for data in self.scenarios.values()])
         genel_max_time = max([data['b_fut'][-1] * data['cam_cycle_time'] for data in self.scenarios.values()])
 
         for i, (name, data) in enumerate(self.scenarios.items()):
             col = colors[i % len(colors)]
-            etiket = f"{name} ({data['mat_name']})"
-
-            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80, zorder=3) 
-            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{etiket}", zorder=2)
+            # Etiket başlığı grafikteki renkle uyumlu hale getirildi
+            st.markdown(f"""
+                <div style='background-color:{col}; color:white; padding:5px 15px; border-radius:5px; display:inline-block; margin-top:15px; font-weight:bold; box-shadow: 2px 2px 4px rgba(0,0,0,0.2);'>
+                    📌 {name.upper()} | Alaşım: {data['mat_name']}
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Scatter (Nokta) grafikleri daha belirgin yapıldı (edgecolor eklendi)
+            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=100, zorder=3, edgecolor='white', linewidth=1) 
+            # Eğri grafiği daha kalın (linewidth=3)
+            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{name}", zorder=2)
             guven_bandi = data['rmse_val'] * 2 
-            ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.15)
+            ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.12)
 
             time_raw = [b * data['cam_cycle_time'] for b in data['b_raw']]
             time_fut = [b * data['cam_cycle_time'] for b in data['b_fut']]
-            ax2.scatter(time_raw, data['y_raw'], color=col, s=80, zorder=3)
-            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3, label=f"{etiket}", zorder=2)
-            ax2.fill_between(time_fut, np.array(data['y_fut']) - guven_bandi, np.array(data['y_fut']) + guven_bandi, color=col, alpha=0.15)
+            ax2.scatter(time_raw, data['y_raw'], color=col, s=100, zorder=3, edgecolor='white', linewidth=1)
+            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3, label=f"{name}", zorder=2)
+            ax2.fill_between(time_fut, np.array(data['y_fut']) - guven_bandi, np.array(data['y_fut']) + guven_bandi, color=col, alpha=0.12)
 
-            st.markdown(f"### 📌 {name.upper()} | Alaşım: {data['mat_name']}")
             col1, col2, col3 = st.columns(3)
             col1.metric("Teorik Takım Ömrü", f"{data['t_theo']:.1f} Dakika")
             col2.metric("Tam Kırılma Noktası (Blok)", data['guven_araligi_metni'])
             col3.metric("Tam Kırılma Noktası (Zaman)", data['sure_araligi_metni'])
             
-            st.info(f"🟢 **Operasyon Önerisi:** {data['uretim_metni']}")
+            # Operasyon önerisi kutusu daha belirgin
+            st.info(f"**Operasyon Önerisi:** {data['uretim_metni']}")
             
             if data['veri_sayisi'] < 3:
                 st.error("⚠️ **Düşük Veri Yoğunluğu:** Modele 3'ten az ölçüm girilmiştir.")
@@ -265,18 +296,19 @@ class AI_ToolLife:
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            ax.axhline(y=self.tolerance, color='#E31837', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})", zorder=1)
+            # Tolerans çizgisi Dark Mode'da okunsun diye parlak kırmızıya çevrildi ve kalınlaştı
+            ax.axhline(y=self.tolerance, color='#ff0000', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})", zorder=1)
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
             ax.set_ylabel(f"Boyutsal Sapma ({self.birim_ad})", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
-            ax.grid(True, linestyle=':', alpha=0.4, zorder=0)
+            # Grid çizgileri daha net yapıldı
+            ax.grid(True, linestyle=':', alpha=0.6, zorder=0)
 
         ax1.set_xlim(0, genel_max_blok)
         ax2.set_xlim(0, genel_max_time)
         fig.tight_layout(pad=2.0) 
-        
         st.pyplot(fig)
 
 MALZEMELER = {
@@ -300,6 +332,8 @@ with st.sidebar:
     is_mikron = "Mikron" in birim_secimi
     birim_ad = "Mikron" if is_mikron else "mm"
     tol_ornek = "Örn: 5" if is_mikron else "Örn: 0.005"
+    
+    # Senin düzeltmen aynen korundu
     cmm_ornek = "Örn: 0.2 0.5 0.8 1.2 1.6 2" if is_mikron else "Örn: 0.0002 0.0005 0.0008 0.0012 0.0016 0.0020"
 
     tol_siniri = st.number_input(f"Maksimum Tolerans ({birim_ad})", value=None, format="%g", placeholder=tol_ornek)
@@ -392,6 +426,7 @@ for i, sekme in enumerate(sekmeler):
 
 st.markdown("---")
 
+# Buton animasyonlu ve ikonlu hale getirildi
 if st.button("🚀 Takım Ömrü Tahminini Başlat", use_container_width=True, type="primary"):
     if len(eksik_alanlar) > 0:
         hata_metni = "\n".join([f"- {alan}" for alan in list(set(eksik_alanlar))])

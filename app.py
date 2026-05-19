@@ -8,24 +8,13 @@ import os
 
 st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
 
-# --- CSS İLE TEMİZ TEMA VE HAVACILIK DETAYLARI ENJEKSİYONU ---
+# --- CSS İLE TEMA ENJEKSİYONU (DARK MODE UYUMLU) ---
 st.markdown("""
 <style>
-    /* Reset Background for perfect visibility */
-    .stApp {
-        background: white !important;
-    }
-
-    /* Başlıklar - Tomtaş Mavisi (#004B87) */
+    /* Başlıklar - Açık/Koyu temaya otomatik uyum sağlar, sadece font ayarlandı */
     h1, h2, h3, h4 {
-        color: #004B87 !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-weight: 700;
-    }
-    
-    /* Özet Metriklerin Sayıları */
-    [data-testid="stMetricValue"] {
-        color: #004B87 !important;
     }
 
     /* Ana Buton (Başlat Tuşu) */
@@ -51,18 +40,9 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* Enforce black text in input fields for safety */
-    .stTextInput>div>div>input {
-        color: black !important;
-    }
-    .stNumberInput>div>div>input {
-        color: black !important;
-    }
-
-    /* YAN PANEL (SIDEBAR) STİLİ */
+    /* YAN PANEL (SIDEBAR) STİLİ - Kırmızı Kenarlık */
     [data-testid="stSidebar"] {
-        background-color: #f8f9fa;
-        border-right: 3px solid #004B87;
+        border-right: 3px solid #E31837;
     }
 
     /* "REMOVE BEFORE FLIGHT" Etiketi (Yan Menü Üstü) */
@@ -83,19 +63,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 # ------------------------------------------------
 
-# --- İMZA YERİ (Ana ekranın en sol üstü) - Havacılık Etiketi Stili ---
-st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 2px 10px; font-family: monospace; font-weight: bold; border-radius: 3px; font-size: 12px;'>by Fuat Arıkan | ALGORITHM DEVELOPER</div>", unsafe_allow_html=True)
+# --- İMZA YERİ (Ana ekranın en sol üstü) - SADELEŞTİRİLDİ ---
+st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 2px 10px; font-family: monospace; font-weight: bold; border-radius: 3px; font-size: 12px;'>by Fuat Arıkan</div>", unsafe_allow_html=True)
 
 # --- HEADER: BAŞLIK VE LOGO ---
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
-    st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ CMM ve CAM Entegreli Kestirimci Bakım Algoritması</h2>", unsafe_allow_html=True)
+    # Başlık Konuya Odaklandı
+    st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ Akıllı Takım Ömrü Yönetimi ve Kestirimci Bakım Sistemi</h2>", unsafe_allow_html=True)
     
-    # --- YENİ SLOGAN ALANI (Ana başlığın hemen altı) ---
     st.markdown("<hr style='margin-top: 5px; margin-bottom: 5px; border-color: #E31837; border-width: 1px;'>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #004B87; font-size: 16px; font-weight: bold; font-style: italic; letter-spacing: 1px;'>Precision in Engineering, Excellence in Aviation.</p>", unsafe_allow_html=True)
-    # -----------------------------------------------------
+    # Alt Slogan
+    st.markdown("<p style='text-align: center; color: #888888; font-size: 16px; font-weight: bold; font-style: italic; letter-spacing: 1px;'>Precision in Engineering, Excellence in Aviation.</p>", unsafe_allow_html=True)
 
 with col_logo:
     if os.path.exists("agtoe.png"):
@@ -205,10 +185,10 @@ class AI_ToolLife:
             st.warning("Gösterilecek veri yok.")
             return
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), facecolor='#f8f9fa')
+        # Facecolor tamamen kaldırıldı. Böylece Streamlit Dark/Light modunu otomatik uygular.
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
         
-        # Grafik renkleri Tomtaş Kırmızısı (#E31837) ve Mavisi (#004B87) - Tekrar optimize edildi
-        colors = ['#E31837', '#004B87', '#d62728', '#1f77b4', '#ff7f0e']
+        colors = ['#004B87', '#1f77b4', '#d62728', '#2ca02c', '#ff7f0e']
         
         genel_max_blok = max([data['b_fut'][-1] for data in self.scenarios.values()])
         genel_max_time = max([data['b_fut'][-1] * data['cam_cycle_time'] for data in self.scenarios.values()])
@@ -217,15 +197,16 @@ class AI_ToolLife:
             col = colors[i % len(colors)]
             etiket = f"{name} ({data['mat_name']})"
 
-            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80, edgecolors='black') 
-            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{etiket}")
+            # Edgecolor kaldırıldı, dark modda noktaların görünürlüğünü bozmamak için
+            ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80, zorder=3) 
+            ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{etiket}", zorder=2)
             guven_bandi = data['rmse_val'] * 2 
             ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.15)
 
             time_raw = [b * data['cam_cycle_time'] for b in data['b_raw']]
             time_fut = [b * data['cam_cycle_time'] for b in data['b_fut']]
-            ax2.scatter(time_raw, data['y_raw'], color=col, s=80, edgecolors='black')
-            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3, label=f"{etiket}")
+            ax2.scatter(time_raw, data['y_raw'], color=col, s=80, zorder=3)
+            ax2.plot(time_fut, data['y_fut'], color=col, linestyle='-', linewidth=3, label=f"{etiket}", zorder=2)
             ax2.fill_between(time_fut, np.array(data['y_fut']) - guven_bandi, np.array(data['y_fut']) + guven_bandi, color=col, alpha=0.15)
 
             st.markdown(f"### 📌 {name.upper()} | Alaşım: {data['mat_name']}")
@@ -240,7 +221,7 @@ class AI_ToolLife:
                 st.error("⚠️ **Düşük Veri Yoğunluğu:** Modele 3'ten az ölçüm girilmiştir.")
             
             if data['uzak_tahmin_uyarisi']:
-                st.warning("🔭 **Aşırı Uzak Tahmin:** Uzun vadeli regresyon tahminleri yanıltıcı olabilir.")
+                st.warning("🔭 **Aşırı Uzak Tahmin:** Uzun vadeli tahminler yanıltıcı olabilir.")
 
             if data['karsilastirma_durumu'] == "hata_buyuk":
                 st.error(f"🛑 **Fiziksel Tutarsızlık İhtimali:** Hesaplanan süre Teorik Takım Ömrünü ({data['t_theo']:.1f} Dk) aşıyor.")
@@ -251,24 +232,28 @@ class AI_ToolLife:
 
             rmse_sinir = 10.0 if self.birim_ad == "Mikron" else 0.01
             if data['rmse_val'] > rmse_sinir:
-                st.warning(f"⚠️ **Veri Anomalyası:** CMM sapması limitin üzerinde (Sapma: {data['rmse_val']:.4f} {self.birim_ad}).")
+                st.warning(f"⚠️ **Veri Anomalyası:** Sapma: {data['rmse_val']:.4f} {self.birim_ad}.")
             st.divider()
 
         y_limit = self.tolerance * 1.5
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            ax.axhline(y=self.tolerance, color='black', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})")
+            # Tolerans çizgisi Dark Mode'da okunsun diye kırmızıya çevrildi
+            ax.axhline(y=self.tolerance, color='#E31837', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})", zorder=1)
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
             ax.set_ylabel(f"Boyutsal Sapma ({self.birim_ad})", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
-            ax.grid(True, linestyle=':', alpha=0.8)
+            # Grid çizgileri temaya uyum sağlaması için sadeleştirildi
+            ax.grid(True, linestyle=':', alpha=0.4, zorder=0)
 
         ax1.set_xlim(0, genel_max_blok)
         ax2.set_xlim(0, genel_max_time)
         fig.tight_layout(pad=2.0) 
+        
+        # Grafik şeffaf arka planla Streamlit temasına bırakıldı
         st.pyplot(fig)
 
 MALZEMELER = {
@@ -292,10 +277,7 @@ with st.sidebar:
     is_mikron = "Mikron" in birim_secimi
     birim_ad = "Mikron" if is_mikron else "mm"
     tol_ornek = "Örn: 5" if is_mikron else "Örn: 0.005"
-    
-    # --- SENİN YAZDIĞIN KUSURSUZ ÖRNEK GÜNCELLEMESİ ---
     cmm_ornek = "Örn: 0.2 0.5 0.8 1.2 1.6 2" if is_mikron else "Örn: 0.0002 0.0005 0.0008 0.0012 0.0016 0.0020"
-    # ---------------------------------------------------
 
     tol_siniri = st.number_input(f"Maksimum Tolerans ({birim_ad})", value=None, format="%g", placeholder=tol_ornek)
     if tol_siniri is None:
@@ -375,6 +357,7 @@ for i, sekme in enumerate(sekmeler):
                 cam_sn = st.number_input("Saniye (Opsiyonel)", value=None, placeholder="Örn: 15", min_value=0, max_value=59, step=1, key=f"cam_sn_{i}")
             
             cam_sure = cam_dk + (cam_sn if cam_sn else 0) / 60.0 if cam_dk is not None else None
+            
             cmm_str = st.text_input(f"CMM Verileri ({birim_ad}, Boşluklu)", value="", placeholder=cmm_ornek, key=f"cmm_{i}")
             if not cmm_str: eksik_alanlar.append(f"{isim}: CMM Verileri")
 

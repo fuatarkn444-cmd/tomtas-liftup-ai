@@ -6,12 +6,36 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 import os
 
-st.set_page_config(page_title="Kestirimci Bakım Algoritması", layout="wide")
+st.set_page_config(page_title="LIFT-UP Kestirimci Bakım", layout="wide")
+
+# --- KARŞILAMA EKRANI (POP-UP) MANTIĞI ---
+@st.dialog("✈️ LIFT-UP Sistemine Hoş Geldiniz")
+def rehber_dialog():
+    st.markdown("""
+    **Bu sistem, Makine Öğrenmesi ve Taylor Denklemlerini harmanlayarak takım ömrünü otonom olarak tahmin eder.**
+    
+    ### 🛠️ Nasıl Kullanılır?
+    1. **Birim ve Tolerans:** Sol menüden ölçüm biriminizi (Mikron/mm) ve tezgâhın maksimum aşınma toleransını girin.
+    2. **Parametreler:** Kullanacağınız malzeme, takım ölçüleri ve CAM kesme verilerini eksiksiz doldurun.
+    3. **CMM Verileri:** Ölçtüğünüz aşınma değerlerini aralarında boşluk bırakarak yazın *(Örn: 2.5 4.1 6.3)*.
+    4. **Analiz:** 'Tahmini Başlat' butonuna basın ve yapay zekanın operasyon önerilerini inceleyin.
+    
+    *(Bu bilgilendirme penceresini sağ üstteki 'X' işaretine basarak kapatabilirsiniz.)*
+    """)
+
+# Sadece ilk girişte bir kere çalışması için session_state kontrolü
+if 'ilk_giris' not in st.session_state:
+    st.session_state.ilk_giris = True
+
+if st.session_state.ilk_giris:
+    rehber_dialog()
+    st.session_state.ilk_giris = False
+# ----------------------------------------
 
 # --- CSS İLE TEMA ENJEKSİYONU (DARK MODE UYUMLU) ---
 st.markdown("""
 <style>
-    /* Başlıklar - Açık/Koyu temaya otomatik uyum sağlar, sadece font ayarlandı */
+    /* Başlıklar */
     h1, h2, h3, h4 {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-weight: 700;
@@ -19,18 +43,19 @@ st.markdown("""
 
     /* Ana Buton (Başlat Tuşu) */
     div.stButton > button:first-child {
-        background-color: #004B87;
+        background: linear-gradient(90deg, #004B87, #0066cc);
         color: #FFFFFF;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         font-weight: bold;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
     
     div.stButton > button:first-child:hover {
-        background-color: #E31837; /* Kırmızı */
+        background: linear-gradient(90deg, #E31837, #ff3333);
         color: #FFFFFF;
-        border: none;
+        transform: translateY(-2px);
     }
 
     /* Aktif Sekme (Tab) Alt Çizgisi */
@@ -40,7 +65,7 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* YAN PANEL (SIDEBAR) STİLİ - Kırmızı Kenarlık */
+    /* YAN PANEL (SIDEBAR) STİLİ */
     [data-testid="stSidebar"] {
         border-right: 3px solid #E31837;
     }
@@ -58,24 +83,27 @@ st.markdown("""
         letter-spacing: 1px;
         margin-bottom: 20px;
         border-radius: 0 0 5px 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 </style>
 """, unsafe_allow_html=True)
 # ------------------------------------------------
 
-# --- İMZA YERİ (Ana ekranın en sol üstü) - SADELEŞTİRİLDİ ---
-st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 2px 10px; font-family: monospace; font-weight: bold; border-radius: 3px; font-size: 12px;'>by Fuat Arıkan</div>", unsafe_allow_html=True)
+# --- İMZA YERİ (Ana ekranın en sol üstü) ---
+st.markdown("<div style='text-align: left; background-color: #E31837; color: white; display: inline-block; padding: 2px 10px; font-family: monospace; font-weight: bold; border-radius: 3px; font-size: 12px; box-shadow: 1px 1px 3px rgba(0,0,0,0.3);'>by Fuat Arıkan</div>", unsafe_allow_html=True)
 
 # --- HEADER: BAŞLIK VE LOGO ---
 col_baslik, col_logo = st.columns([5, 1])
 
 with col_baslik:
-    # Başlık Konuya Odaklandı
-    st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ Akıllı Takım Ömrü Yönetimi ve Kestirimci Bakım Sistemi</h2>", unsafe_allow_html=True)
+    # Başlık Kısaltıldı ve Vurucu Hale Getirildi
+    st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>🛠️ LIFT-UP: Kestirimci Bakım Sistemi</h2>", unsafe_allow_html=True)
     
-    st.markdown("<hr style='margin-top: 5px; margin-bottom: 5px; border-color: #E31837; border-width: 1px;'>", unsafe_allow_html=True)
-    # Alt Slogan
-    st.markdown("<p style='text-align: center; color: #888888; font-size: 16px; font-weight: bold; font-style: italic; letter-spacing: 1px;'>Precision in Engineering, Excellence in Aviation.</p>", unsafe_allow_html=True)
+    # Renk Geçişli (Gradient) Şık Çizgi
+    st.markdown("<hr style='height: 3px; background: linear-gradient(90deg, transparent, #004B87, #E31837, transparent); border: none; margin-top: 10px; margin-bottom: 5px;'>", unsafe_allow_html=True)
+    
+    # Slogan
+    st.markdown("<p style='text-align: center; color: #888888; font-size: 15px; font-weight: bold; font-style: italic; letter-spacing: 1px;'>Precision in Engineering, Excellence in Aviation.</p>", unsafe_allow_html=True)
 
 with col_logo:
     if os.path.exists("agtoe.png"):
@@ -83,7 +111,7 @@ with col_logo:
     elif os.path.exists("logo.jpg"):
         st.image("logo.jpg", width=150)
 
-st.markdown("<hr style='margin-top: 0; border-color: #004B87; border-width: 2px;'>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
 class AI_ToolLife:
     def __init__(self, tolerance, birim_ad):
@@ -185,7 +213,6 @@ class AI_ToolLife:
             st.warning("Gösterilecek veri yok.")
             return
 
-        # Facecolor tamamen kaldırıldı. Böylece Streamlit Dark/Light modunu otomatik uygular.
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
         
         colors = ['#004B87', '#1f77b4', '#d62728', '#2ca02c', '#ff7f0e']
@@ -197,7 +224,6 @@ class AI_ToolLife:
             col = colors[i % len(colors)]
             etiket = f"{name} ({data['mat_name']})"
 
-            # Edgecolor kaldırıldı, dark modda noktaların görünürlüğünü bozmamak için
             ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80, zorder=3) 
             ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=3, label=f"{etiket}", zorder=2)
             guven_bandi = data['rmse_val'] * 2 
@@ -215,7 +241,7 @@ class AI_ToolLife:
             col2.metric("Tam Kırılma Noktası (Blok)", data['guven_araligi_metni'])
             col3.metric("Tam Kırılma Noktası (Zaman)", data['sure_araligi_metni'])
             
-            st.info(f"**Operasyon Önerisi:** {data['uretim_metni']}")
+            st.info(f"🟢 **Operasyon Önerisi:** {data['uretim_metni']}")
             
             if data['veri_sayisi'] < 3:
                 st.error("⚠️ **Düşük Veri Yoğunluğu:** Modele 3'ten az ölçüm girilmiştir.")
@@ -239,21 +265,18 @@ class AI_ToolLife:
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            # Tolerans çizgisi Dark Mode'da okunsun diye kırmızıya çevrildi
             ax.axhline(y=self.tolerance, color='#E31837', linewidth=4, label=f"Tolerans ({self.tolerance} {self.birim_ad})", zorder=1)
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
             ax.set_ylabel(f"Boyutsal Sapma ({self.birim_ad})", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
-            # Grid çizgileri temaya uyum sağlaması için sadeleştirildi
             ax.grid(True, linestyle=':', alpha=0.4, zorder=0)
 
         ax1.set_xlim(0, genel_max_blok)
         ax2.set_xlim(0, genel_max_time)
         fig.tight_layout(pad=2.0) 
         
-        # Grafik şeffaf arka planla Streamlit temasına bırakıldı
         st.pyplot(fig)
 
 MALZEMELER = {

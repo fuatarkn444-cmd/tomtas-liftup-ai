@@ -34,13 +34,17 @@ if st.session_state.ilk_giris:
 # --- CSS İLE TEMA VE DÜZEN ENJEKSİYONU ---
 st.markdown("""
 <style>
-    /* ÜST BOŞLUĞU YOK ETME VE EKRANI GENİŞLETME */
-    .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 96% !important;
+    /* ÜST TAVAN ŞERİDİ (PREMIUM BANNER) - Yan menüyle hizalı */
+    header[data-testid="stHeader"] {
+        background: linear-gradient(90deg, #004B87, #E31837) !important;
+        height: 6px !important;
     }
 
+    /* ÜST BOŞLUK HİZALAMASI */
+    .block-container {
+        padding-top: 1rem !important; 
+        max-width: 98% !important;
+    }
     /* Başlıklar */
     h1, h2, h3, h4 {
         color: #004B87 !important;

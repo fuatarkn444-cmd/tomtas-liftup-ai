@@ -27,8 +27,9 @@ with col_logo:
 st.markdown("<hr style='margin-top: 0;'>", unsafe_allow_html=True)
 
 class AI_ToolLife:
-    def __init__(self, tolerance):
+    def __init__(self, tolerance, birim_ad):
         self.tolerance = tolerance  
+        self.birim_ad = birim_ad
         self.scenarios = {}
 
     def calculate_daf(self, ae, D):
@@ -52,7 +53,7 @@ class AI_ToolLife:
         model = LinearRegression().fit(X_poly, y)
         
         mse = mean_squared_error(y, model.predict(X_poly))
-        rmse_mikron = np.sqrt(mse) 
+        rmse_val = np.sqrt(mse) 
 
         a, b, c = model.coef_[2], model.coef_[1], model.intercept_ - self.tolerance
         coefs = [a, b, c] if abs(a) > 1e-15 else [b, c]
@@ -113,7 +114,7 @@ class AI_ToolLife:
         self.scenarios[name] = {
             'mat_name': mat_name, 'b_raw': blocks, 'y_raw': wear_data,
             'b_fut': future_blocks.flatten(), 'y_fut': future_y,
-            'rmse_mikron': rmse_mikron, 't_theo': t_theo,
+            'rmse_val': rmse_val, 't_theo': t_theo,
             'guven_araligi_metni': guven_araligi_metni,
             'sure_araligi_metni': sure_araligi_metni,
             'uretim_metni': uretim_metni,
@@ -140,7 +141,7 @@ class AI_ToolLife:
 
             ax1.scatter(data['b_raw'], data['y_raw'], color=col, s=80) 
             ax1.plot(data['b_fut'], data['y_fut'], color=col, linestyle='--', linewidth=2.5, label=f"{etiket}")
-            guven_bandi = data['rmse_mikron'] * 2 
+            guven_bandi = data['rmse_val'] * 2 
             ax1.fill_between(data['b_fut'], data['y_fut'] - guven_bandi, data['y_fut'] + guven_bandi, color=col, alpha=0.15)
 
             time_raw = [b * data['cam_cycle_time'] for b in data['b_raw']]
@@ -170,18 +171,20 @@ class AI_ToolLife:
             elif data['karsilastirma_durumu'] == "hata_kucuk":
                 st.error(f"⚠️ **Aşırı Erken Aşınma:** Takım ömrü teorik değerin %15'inden bile daha az! Ya veriler yanlış girildi ya da tezgâhta takımı mahveden bir hata (aşırı titreşim, talaş sıkışması, yetersiz soğutma) mevcut.")
 
-            if data['rmse_mikron'] > 10.0:
-                st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_mikron']:.2f} Mikron). Ölçümleri teyit edin.")
+            # Birime göre dinamik RMSE hata eşiği
+            rmse_sinir = 10.0 if self.birim_ad == "Mikron" else 0.01
+            if data['rmse_val'] > rmse_sinir:
+                st.warning(f"⚠️ **Veri Anomalyası:** CMM ölçümlerinde dalgalanma tespit edildi (Sapma: {data['rmse_val']:.4f} {self.birim_ad}). Ölçümleri teyit edin.")
             st.divider()
 
         y_limit = self.tolerance * 1.5
         for ax, title, xlabel in zip([ax1, ax2], 
                                      ["Blok Sayısına Göre Takım Aşınması", "CAM Süresine Göre Takım Aşınması"], 
                                      ["İşlenen Sütun / Blok Sayısı", "Aktif CAM İşleme Süresi (Dakika)"]):
-            ax.axhline(y=self.tolerance, color='black', linewidth=3, label=f"Tolerans ({self.tolerance} Mikron)")
+            ax.axhline(y=self.tolerance, color='black', linewidth=3, label=f"Tolerans ({self.tolerance} {self.birim_ad})")
             ax.set_title(title, fontsize=16, fontweight='bold', pad=15)
             ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
-            ax.set_ylabel("Boyutsal Sapma (Mikron)", fontsize=12, fontweight='bold')
+            ax.set_ylabel(f"Boyutsal Sapma ({self.birim_ad})", fontsize=12, fontweight='bold')
             ax.set_ylim(0.0, y_limit) 
             ax.legend(loc='upper left', fontsize=10)
             ax.grid(True, linestyle=':', alpha=0.8)
@@ -207,8 +210,16 @@ eksik_alanlar = []
 
 with st.sidebar:
     st.header("⚙️ Genel Ayarlar")
-    # BURADA "MİKRON" YAZIYOR VE "Örn: 5" VAR
-    tol_siniri = st.number_input("Maksimum Tolerans (Mikron)", value=None, format="%g", placeholder="Örn: 5")
+    
+    # --- YENİ: DİNAMİK BİRİM SEÇİCİ ---
+    birim_secimi = st.radio("📏 Ölçüm Birimi Sistemi", ["Mikron (µm)", "Milimetre (mm)"], horizontal=True)
+    is_mikron = "Mikron" in birim_secimi
+    birim_ad = "Mikron" if is_mikron else "mm"
+    tol_ornek = "Örn: 5" if is_mikron else "Örn: 0.005"
+    cmm_ornek = "Örn: 1 2.5 4.2" if is_mikron else "Örn: 0.001 0.0025 0.0042"
+    # ----------------------------------
+
+    tol_siniri = st.number_input(f"Maksimum Tolerans ({birim_ad})", value=None, format="%g", placeholder=tol_ornek)
     if tol_siniri is None:
         eksik_alanlar.append("Genel Ayarlar: Maksimum Tolerans")
 
@@ -226,10 +237,9 @@ with st.sidebar:
 
     genel_t_cap, genel_t_dis, genel_t_boy = None, None, None
     if ortak_takim:
-        # Takım ölçüleri standart mm'dir, bu yüzden mm bırakıldı.
-        genel_t_cap = st.number_input("Ortak Takım Çapı (D) [mm]", value=None, format="%g", placeholder="Örn: 6.0")
-        genel_t_dis = st.number_input("Ortak Takım Diş Sayısı (z)", value=None, placeholder="Örn: 4")
-        genel_t_boy = st.number_input("Ortak Takım Kesme Boyu (Lc) [mm]", value=None, format="%g", placeholder="Örn: 24.0")
+        genel_t_cap = st.number_input("Ortak Takım Çapı (D) [mm]", value=None, min_value=1, step=1, placeholder="Örn: 6")
+        genel_t_dis = st.number_input("Ortak Takım Diş Sayısı (z)", value=None, min_value=1, step=1, placeholder="Örn: 4")
+        genel_t_boy = st.number_input("Ortak Takım Kesme Boyu (Lc) [mm]", value=None, min_value=1, step=1, placeholder="Örn: 24")
 
 st.markdown(f"### 📋 Test Verisi Girişi ({senaryo_sayisi} Senaryo)")
 sekmeler = st.tabs([f"{i+1}. Senaryo" for i in range(senaryo_sayisi)])
@@ -253,9 +263,9 @@ for i, sekme in enumerate(sekmeler):
                 elif s_malzeme_isim: st.info(f"Kullanılan Ortak Malzeme: {s_malzeme_isim}")
 
             if not ortak_takim:
-                t_cap = st.number_input("Takım Çapı (D) [mm]", value=None, format="%g", placeholder="Örn: 6.0", key=f"tcap_{i}")
-                t_dis = st.number_input("Takım Diş Sayısı (z)", value=None, placeholder="Örn: 4", key=f"tdis_{i}")
-                t_boy = st.number_input("Takım Kesme Boyu (Lc) [mm]", value=None, format="%g", placeholder="Örn: 24.0", key=f"tboy_{i}")
+                t_cap = st.number_input("Takım Çapı (D) [mm]", value=None, min_value=1, step=1, placeholder="Örn: 6", key=f"tcap_{i}")
+                t_dis = st.number_input("Takım Diş Sayısı (z)", value=None, min_value=1, step=1, placeholder="Örn: 4", key=f"tdis_{i}")
+                t_boy = st.number_input("Takım Kesme Boyu (Lc) [mm]", value=None, min_value=1, step=1, placeholder="Örn: 24", key=f"tboy_{i}")
                 if t_cap is None: eksik_alanlar.append(f"{isim}: Takım Çapı")
                 if t_dis is None: eksik_alanlar.append(f"{isim}: Takım Diş Sayısı")
                 if t_boy is None: eksik_alanlar.append(f"{isim}: Takım Kesme Boyu")
@@ -269,7 +279,7 @@ for i, sekme in enumerate(sekmeler):
 
         with colB:
             st.markdown("**Kesme ve Ölçüm Parametreleri**")
-            vc = st.number_input("Kesme Hızı (Vc) [m/min]", value=None, format="%g", placeholder="Örn: 400", key=f"vc_{i}")
+            vc = st.number_input("Kesme Hızı (Vc) [m/min]", value=None, min_value=1, step=1, placeholder="Örn: 400", key=f"vc_{i}")
             if vc is None: eksik_alanlar.append(f"{isim}: Kesme Hızı (Vc)")
             fz = st.number_input("İlerleme (fz) [mm/diş]", value=None, format="%g", placeholder="Örn: 0.08", key=f"fz_{i}")
             if fz is None: eksik_alanlar.append(f"{isim}: İlerleme (fz)")
@@ -288,8 +298,8 @@ for i, sekme in enumerate(sekmeler):
             
             cam_sure = cam_dk + (cam_sn if cam_sn else 0) / 60.0 if cam_dk is not None else None
             
-            # BURADA "MİKRON" YAZIYOR VE SİLİK YAZIDA ONDALIKLAR SİLİNDİ
-            cmm_str = st.text_input("CMM Verileri (Mikron, Boşluklu)", value="", placeholder="Örn: 1 2.5 4.2", key=f"cmm_{i}")
+            # Dinamik CMM Veri girişi (Mikron/mm ve placeholder'lar birime göre değişir)
+            cmm_str = st.text_input(f"CMM Verileri ({birim_ad}, Boşluklu)", value="", placeholder=cmm_ornek, key=f"cmm_{i}")
             if not cmm_str: eksik_alanlar.append(f"{isim}: CMM Verileri")
 
         senaryo_verileri.append({
@@ -306,7 +316,8 @@ if st.button("🚀 Takım Ömrü Tahminini Başlat", use_container_width=True, t
         st.error(f"⚠️ Lütfen analizi başlatmadan önce aşağıdaki eksik bilgileri doldurunuz:\n\n{hata_metni}")
     else:
         try:
-            system = AI_ToolLife(tolerance=tol_siniri)
+            # Sistemi başlatırken kullanıcının seçtiği birimi de gönderiyoruz
+            system = AI_ToolLife(tolerance=tol_siniri, birim_ad=birim_ad)
             for d in senaryo_verileri:
                 cmm_vals = [float(x) for x in d["cmm_str"].replace(',', ' ').split()]
                 system.add_scenario(d["isim"], d["mat_isim"], d["mat_data"]['kc'], d["mat_data"]['c_taylor'], d["t_cap"], d["t_dis"], d["t_boy"], d["vc"], d["fz"], d["ap"], d["ae"], list(range(1, len(cmm_vals) + 1)), cmm_vals, d["cam_sure"])
